@@ -1,20 +1,20 @@
 import "./App.css";
 import { Route, Routes } from "react-router-dom";
-import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import { createContext, useState } from "react";
+import { AuthProvider } from "./context/AuthContext";
 
 export const UserContext = createContext({});
 
 function App() {
-  const [userAuth, setUserAuth] = useState({});
-
   return (
-    <UserContext.Provider value={{ userAuth, setUserAuth }}>
+    <AuthProvider>
       <Routes>
-        <Route index element={<HomePage />} />
-        <Route path="/movie" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/sign-up" element={<RegisterPage />} />
       </Routes>
-    </UserContext.Provider>
+    </AuthProvider>
   );
 }
 

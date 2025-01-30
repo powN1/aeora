@@ -2,18 +2,41 @@ import axios from "axios";
 import { authWithGoogle, authWithFacebook } from "../common/firebase";
 import { toast } from "react-toastify";
 import { storeInSession } from "./sessionService";
-import { useContext } from "react";
-import { UserContext } from "../App";
-import { UserRegister, FacebookResponse, FormData } from "../utils/interface";
+import { UserRegister, UserLogin, UserAuth } from "../utils/interface";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-const register = async (user: UserRegister) => {
-  const response = await axios.post(`${BASE_URL}/auth/register`, user);
-  if (response.data) {
-    storeInSession("user", JSON.stringify(response.data));
+const login = async (user: UserLogin, setUserAuth: (user: UserAuth | null) => void) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/auth/login`, user);
+
+    if (response.data) {
+      storeInSession("user", JSON.stringify(response.data));
+      const userData: UserAuth = response.data;
+      setUserAuth(userData);
+      return response.data;
+    }
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Login failed");
+    throw err;
   }
-  return response.data;
+};
+
+const register = async (user: UserRegister, setUserAuth: (user: UserAuth | null) => void) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/auth/register`, user);
+
+    if (response.data) {
+      storeInSession("user", JSON.stringify(response.data));
+      const userData: UserAuth = response.data;
+      setUserAuth(userData);
+      return response.data;
+    }
+
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Registration failed");
+    throw err;
+  }
 };
 
 const loginGoogleUser = async () => {
@@ -25,16 +48,17 @@ const loginGoogleUser = async () => {
     const googleToken = googleRes.accessToken;
 
     let formData = { accessToken: googleToken };
-    
+
     const response = await axios.post(`${BASE_URL}/api/auth/login-google`, formData);
-    console.log(response.data)
+    console.log(response.data);
     //
     // if (response.data) {
     //   storeInSession("user", JSON.stringify(response.data));
     // }
     //
   } catch (err: any) {
-    return toast.error("Trouble loggin in through google");
+    toast.error(err.response?.data?.error || "Trouble logging in with google");
+    throw err;
   }
 };
 
@@ -52,54 +76,10 @@ const loginFacebookUser = async (): Promise<void> => {
     };
 
     await axios.post(BASE_URL + "/api/auth/login-facebook", formData);
-
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.error("Error logging in:", err.message);
-    }
-
-    toast.error("Trouble logging in through Facebook");
+    toast.error(err.response?.data?.error || "Trouble logging in with facebook");
+    throw err;
   }
 };
 
-// const userAuthThroughServer = async (serverRoute: string, formData) => {
-//   const response = await axios.post(import.meta.env.VITE_SERVER_DOMAIN + serverRoute, formData);
-//   try {
-//     storeInSession("user", JSON.stringify(response.data));
-//     setUserAuth(response.data);
-//   } catch (err) {
-//     return toast.error(err);
-//   }
-// };
-//
-// export const handleGoogleAuth = async () => {
-//   try {
-//     const googleRes = await authWithGoogle();
-//
-//     let serverRoute = "/api/google-auth";
-//
-//     let formData = { access_token: googleRes.user.accessToken };
-//
-//     await userAuthThroughServer(serverRoute, formData);
-//   } catch (err) {
-//     return toast.error("Trouble loggin in through google");
-//   }
-// };
-//
-// export const handleFacebookAuth = async () => {
-//   try {
-//     const facebookRes = await authWithFacebook();
-//     let serverRoute = "/api/facebook-auth";
-//
-//     let formData = {
-//       access_token: facebookRes.user.accessToken,
-//       facebook_access_token: facebookRes.user.facebookAccessToken,
-//     };
-//
-//     userAuthThroughServer(serverRoute, formData);
-//   } catch (err) {
-//     return toast.error("Trouble loggin in through facebook");
-//   }
-// };
-
-export { register, loginGoogleUser, loginFacebookUser };
+export { login, loginGoogleUser, loginFacebookUser, register };

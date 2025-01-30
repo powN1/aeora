@@ -1,8 +1,15 @@
-import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "firebase-admin/auth";
 import User from "../models/UserModel.ts";
 import { generateJWTAccessToken } from "../services/jwt.ts";
+import bcrypt from "bcrypt";
+import type { NextFunction, Request, Response } from "express";
 import type { IUser } from "../config/interface.ts";
+import { AuthenticationError } from "../errors/AuthenticationError.ts";
+import { InternalServerError } from "../errors/InternalServerError.ts";
+
+// Regex for identifying whether the email and password are correctly formatted
+let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
+let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 
 const formatUserData = (userData: IUser) => {
   return {
@@ -26,9 +33,10 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
     if (user) {
       //login
       if (!user.facebookAuth) {
-        res.status(403).json({
+        res.status(409).json({
           error: "This email was signed up without facebook. Please log in with password to access the account.",
         });
+        return;
       }
     } else {
       //signup
@@ -55,13 +63,14 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
       const formattedUser = formatUserData(user);
 
       res.status(200).json(formattedUser);
+      return;
     }
   } catch (err) {
-    next(err);
+    next(new InternalServerError());
   }
 };
 
-export const loginGoogleUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const loginGoogleUser = async (req: Request, res: Response, next: NextFunction) => {
   let { accessToken } = req.body;
 
   try {
@@ -74,9 +83,10 @@ export const loginGoogleUser = async (req: Request, res: Response, next: NextFun
     if (user) {
       //login
       if (!user.googleAuth) {
-        res.status(403).json({
+        res.status(409).json({
           error: "This email was signed up without google. Please log in with password to access the account.",
         });
+        return;
       }
     } else {
       //signup
@@ -100,8 +110,118 @@ export const loginGoogleUser = async (req: Request, res: Response, next: NextFun
       const formattedUser = formatUserData(user);
 
       res.status(200).json(formattedUser);
+      return;
     }
   } catch (err) {
-    next(err);
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
+export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
+  const { firstName, surname, email, password } = req.body;
+
+  // Error checking
+  if (firstName.length < 2) {
+    res.status(400).json({ success: false, message: "First name must be at least 2 letters long" });
+    return;
+  }
+  if (surname.length < 3) {
+    res.status(400).json({ success: false, message: "Surname must be at least 3 letters long" });
+    return;
+  }
+  if (!email.length) {
+    res.status(400).json({ success: false, message: "Enter email" });
+    return;
+  }
+  if (!emailRegex.test(email)) {
+    res.status(400).json({ success: false, message: "Email is invalid" });
+    return;
+  }
+  if (!passwordRegex.test(password)) {
+    res.status(400).json({
+      success: false,
+      message: "Password should be 6-20 characters long with a numeric, 1 lowercase and 1 uppercase letters",
+    });
+    return;
+  }
+
+  try {
+    // Use bcrypt to hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName,
+      surname,
+      email,
+      password: hashedPassword,
+    });
+
+    const savedUser = await user.save();
+    user.accessToken = generateJWTAccessToken(user._id);
+
+    res.status(200).json(formatUserData(savedUser));
+    return;
+  } catch (err: any) {
+    // Check for duplicated emails
+    if (err.code === 11000) {
+      const duplicateField = Object.keys(err.keyValue)[0];
+      if (duplicateField === "email") {
+        res.status(409).json({ success: false, message: "Email already exists" });
+        return;
+      }
+    }
+
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  let { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      res.status(400).json({ error: "Email not found" });
+      return;
+    }
+
+    // Check if email was registered with google or facebook
+    if (user.googleAuth && !user.facebookAuth) {
+      res.status(409).json({
+        success: false,
+        message: "Account was created using google. Try logging in with google.",
+      });
+      return;
+    } else if (!user.googleAuth && user.facebookAuth) {
+      res.status(409).json({
+        success: false,
+        message: "Account was created using facebook. Try logging in with facebook.",
+      });
+      return;
+    }
+
+    const passwordComparison = await bcrypt.compare(password, user.password);
+
+    if (!passwordComparison) {
+      res.status(400).json({
+        success: false,
+        message: "Password incorrect.",
+      });
+      return;
+    }
+    
+    // Generate fresh user token
+    user.accessToken = generateJWTAccessToken(user._id);
+
+    res.status(200).json(formatUserData(user));
+    return;
+
+    
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
   }
 };

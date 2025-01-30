@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --color-aeora: #ff6665;
+  --color-aeora-100: #FFD1D1;
+  --color-aeora-150: #FFB3B2;
+  --color-aeora-200: #FF9493;
+  --color-aeora-300: #FF7574;
+  --color-aeora-400: #ff6665;
+  --color-aeora-500: #CC5251;
+  --color-aeora-600: #993D3D;
+  --color-aeora-700: #662928;
+  --color-aeora-800: #331414
+}
