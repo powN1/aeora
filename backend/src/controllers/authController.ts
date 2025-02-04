@@ -13,11 +13,59 @@ let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for pass
 
 const formatUserData = (userData: IUser) => {
   return {
+    id: userData._id,
     accessToken: userData.accessToken,
-    profile_img: userData.profileImg,
+    profileImg: userData.profileImg,
     firstName: userData.firstName,
     surname: userData.surname,
   };
+};
+
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  let { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      res.status(400).json({ error: "Email not found" });
+      return;
+    }
+
+    // Check if email was registered with google or facebook
+    if (user.googleAuth && !user.facebookAuth) {
+      res.status(409).json({
+        success: false,
+        message: "Account was created using google. Try logging in with google.",
+      });
+      return;
+    } else if (!user.googleAuth && user.facebookAuth) {
+      res.status(409).json({
+        success: false,
+        message: "Account was created using facebook. Try logging in with facebook.",
+      });
+      return;
+    }
+
+    const passwordComparison = await bcrypt.compare(password, user.password);
+
+    if (!passwordComparison) {
+      res.status(400).json({
+        success: false,
+        message: "Password incorrect.",
+      });
+      return;
+    }
+
+    // Generate fresh user token
+    user.accessToken = generateJWTAccessToken(user._id);
+
+    res.status(200).json(formatUserData(user));
+    return;
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
 };
 
 export const loginFacebookUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -36,6 +84,10 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
         res.status(409).json({
           error: "This email was signed up without facebook. Please log in with password to access the account.",
         });
+        return;
+      } else {
+        user.accessToken = generateJWTAccessToken(user._id);
+        res.status(200).json(formatUserData(user));
         return;
       }
     } else {
@@ -71,6 +123,7 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
 };
 
 export const loginGoogleUser = async (req: Request, res: Response, next: NextFunction) => {
+  console.log("login google");
   let { accessToken } = req.body;
 
   try {
@@ -86,6 +139,11 @@ export const loginGoogleUser = async (req: Request, res: Response, next: NextFun
         res.status(409).json({
           error: "This email was signed up without google. Please log in with password to access the account.",
         });
+        return;
+      } else {
+        // Generate fresh user token
+        user.accessToken = generateJWTAccessToken(user._id);
+        res.status(200).json(formatUserData(user));
         return;
       }
     } else {
@@ -158,6 +216,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     });
 
     const savedUser = await user.save();
+    user.id = savedUser._id;
     user.accessToken = generateJWTAccessToken(user._id);
 
     res.status(200).json(formatUserData(savedUser));
@@ -172,55 +231,6 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
-    // If any other errors happen throw 500 error
-    next(new InternalServerError());
-  }
-};
-
-export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  let { email, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email: email });
-
-    if (!user) {
-      res.status(400).json({ error: "Email not found" });
-      return;
-    }
-
-    // Check if email was registered with google or facebook
-    if (user.googleAuth && !user.facebookAuth) {
-      res.status(409).json({
-        success: false,
-        message: "Account was created using google. Try logging in with google.",
-      });
-      return;
-    } else if (!user.googleAuth && user.facebookAuth) {
-      res.status(409).json({
-        success: false,
-        message: "Account was created using facebook. Try logging in with facebook.",
-      });
-      return;
-    }
-
-    const passwordComparison = await bcrypt.compare(password, user.password);
-
-    if (!passwordComparison) {
-      res.status(400).json({
-        success: false,
-        message: "Password incorrect.",
-      });
-      return;
-    }
-    
-    // Generate fresh user token
-    user.accessToken = generateJWTAccessToken(user._id);
-
-    res.status(200).json(formatUserData(user));
-    return;
-
-    
-  } catch (err: any) {
     // If any other errors happen throw 500 error
     next(new InternalServerError());
   }

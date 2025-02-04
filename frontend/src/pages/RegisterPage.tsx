@@ -4,12 +4,15 @@ import { Link } from "react-router-dom";
 import { register } from "../services/authService";
 import { ToastContainer, toast } from "react-toastify";
 import { UserRegister } from "../utils/interface";
+import { useAuth } from "../context/AuthContext";
 
 // Regex for identifying whether the email and password are correctly formatted
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 
 const RegisterPage: React.FC = () => {
+  const { userAuth, setUserAuth } = useAuth();
+
   const [firstNameInputValue, setFirstNameInputValue] = useState("");
   const [surnameInputValue, setSurnameInputValue] = useState("");
   const [emailInputValue, setEmailInputValue] = useState("");
@@ -54,25 +57,25 @@ const RegisterPage: React.FC = () => {
       password: passwordInputValue,
     };
 
-    register(userData);
+    register(userData, userAuth, setUserAuth);
   };
 
   return (
     <div className="bg-gray-100">
       <ToastContainer position="top-center" />
-      <div className="h-screen lg:w-[60%] mx-auto flex flex-col gap-y-8 overflow-hidden px-1">
-        <Link to="/" className="w-38 mt-8">
+      <div className="h-screen lg:w-[60%] lg:px-0 mx-auto flex flex-col gap-y-8 overflow-hidden px-1">
+        <Link to="/" className="w-34 lg:w-38 mt-8">
           <img src={logoExtended} alt="logo" className="w-full h-full object-cover" />
         </Link>
         <section className="flex">
           {/* Left side lg */}
-          <div className="w-1/2 flex flex-col gap-y-2">
+          <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start gap-y-6">
             {/* { Login form } */}
             {/* Slogan */}
-            <h1 className="text-5xl font-bold pb-3 text-transparent bg-clip-text bg-linear-to-br from-aeora to-aeora">
+            <h1 className="text-4xl md:w-3/4 md:text-5xl lg:text-7xl text-center lg:text-start font-bold pb-3 text-aeora">
               Create new account
             </h1>
-            <form onSubmit={registerUser} className="flex flex-col gap-y-4 w-1/2">
+            <form onSubmit={registerUser} className="flex flex-col gap-y-4 w-full md:w-1/2 px-1">
               <p>
                 Already have an account?{" "}
                 <Link

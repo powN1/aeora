@@ -1,8 +1,13 @@
+import { Socket } from "socket.io-client";
+
 export interface UserAuth {
-  firstName: string;
-  surname: string;
-  email: string;
-  accessToken: string;
+  firstName?: string;
+  surname?: string;
+  email?: string;
+  socket?: Socket;
+  id?: string;
+  onlineUsers: string[],
+  accessToken: string | null;
 }
 
 export interface UserRegister {
@@ -27,3 +32,10 @@ export interface FormData {
   facebookAccessToken: string;
 }
 
+export interface MessageCardPreviewProps {
+  firstName: string;
+  surname: string;
+  profileImg: string;
+  lastMessage: string;
+  read: boolean;
+}
