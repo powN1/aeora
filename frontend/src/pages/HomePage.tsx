@@ -1,15 +1,54 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import MessagesList from "../components/MessagesList";
 import MessagesInterface from "../components/MessagesInterface";
 import Navbar from "../components/Navbar";
 import axios from "axios";
+import { ToastContainer } from "react-toastify";
+import { toast } from "react-toastify/unstyled";
+
+export const UsersContext = createContext({});
 
 const HomePage: React.FC = () => {
-  const [users, setUsers] = useState([]);
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
   const { userAuth } = useAuth();
+
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState({});
+  const [messages, setMessages] = useState([]);
+
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+  const getMessages = async () => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/messages/get-messages`,
+        { receiverId: selectedUser._id },
+        {
+          headers: { Authorization: `${userAuth.accessToken}` },
+        }
+      );
+      setMessages(response.data.messages);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const sendMessage = async (message: string) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/messages/send-message`,
+        { message, receiverId: selectedUser._id },
+        {
+          headers: { Authorization: `${userAuth.accessToken}` },
+        }
+      );
+      console.log("send message response", response);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Sending a message failed");
+      throw err;
+    }
+  };
+
   useEffect(() => {
     const getUsers = async () => {
       try {
@@ -23,12 +62,28 @@ const HomePage: React.FC = () => {
     };
     getUsers();
   }, [userAuth]);
+
+  useEffect(() => {
+    getMessages();
+  }, [selectedUser]);
+
   return (
-    <main className="h-screen flex flex-col">
-      <Navbar />
-      <MessagesList users={users} />
-      <MessagesInterface />
-    </main>
+    <UsersContext.Provider
+      value={{
+        users,
+        selectedUser,
+        setSelectedUser,
+        sendMessage,
+        messages,
+      }}
+    >
+      <main className="h-screen flex flex-col lg:flex-row">
+        <ToastContainer position="top-center" />
+        <Navbar />
+        <MessagesList />
+        <MessagesInterface />
+      </main>
+    </UsersContext.Provider>
   );
 };
 

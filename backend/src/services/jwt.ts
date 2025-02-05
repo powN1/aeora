@@ -22,19 +22,22 @@ export const verifyJWT = async (req: Request, res: Response, next: NextFunction)
     const token = authHeader;
 
     if (!token) {
-      return res.status(401).json({ error: "No access token" });
+      res.status(401).json({ error: "No access token" });
+      return;
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_ACCESS_KEY);
 
     if (!decoded) {
-      return res.status(401).json({ success: false, message: "Unauthorized - Invalid Token" });
+      res.status(401).json({ success: false, message: "Unauthorized - Invalid Token" });
+      return;
     }
 
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
     req.user = user;

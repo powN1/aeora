@@ -33,9 +33,10 @@ export interface FormData {
 }
 
 export interface MessageCardPreviewProps {
+  id: string;
   firstName: string;
   surname: string;
   profileImg: string;
-  lastMessage: string;
-  read: boolean;
+  lastMessage?: string;
+  read?: boolean;
 }

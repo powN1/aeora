@@ -3,12 +3,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
-import { createContext, useEffect, useState } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { lookInSession } from "./services/sessionService";
+import { useEffect} from "react";
+import { useAuth } from "./context/AuthContext";
 import { checkAuthorization } from "./services/authService";
-
-export const UserContext = createContext({});
 
 function App() {
   const { userAuth, setUserAuth } = useAuth();
