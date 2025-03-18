@@ -3,6 +3,7 @@ import type { MessageCardPreviewProps } from "../utils/interface.ts";
 import defaultUserImg from "../assets/defaultUser.svg";
 import { useContext } from "react";
 import { UsersContext } from "../pages/HomePage.tsx";
+import { useAuth } from "../context/AuthContext.tsx";
 
 const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
   id,
@@ -12,17 +13,31 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
   lastMessage,
   read,
 }) => {
-  const { users, setSelectedUser } = useContext(UsersContext);
+  const { setMessagesInterfaceVisible, users, selectedUser, setSelectedUser, setLoadingMessages } = useContext(UsersContext);
+  const {
+    userAuth: { onlineUsers },
+  } = useAuth();
 
   const handleUserSelection = () => {
-    const selectedUser = users.find((user) => (user._id === id));
-    setSelectedUser(selectedUser);
+    const newSelectedUser = users.find((user) => user._id === id);
+    if(selectedUser === newSelectedUser) return;
+    setMessagesInterfaceVisible(true);
+    setSelectedUser(newSelectedUser);
+    setLoadingMessages(true);
   };
 
   return (
     <div className="flex gap-x-6 p-4 cursor-pointer hover:bg-gray-400/30 rounded-lg" onClick={handleUserSelection}>
-      <div className="flex justify-center items-center w-12 h-12">
-        <img src={profileImg ? profileImg : defaultUserImg} alt="user profile image" className="rounded-full" />
+      <div className="relative flex justify-center items-center w-12 h-12">
+        <img
+          src={profileImg ? profileImg : defaultUserImg}
+          alt="user image"
+          className="rounded-full"
+          referrerPolicy="no-referrer"
+        />
+        {onlineUsers?.includes(id) && (
+          <span className="absolute left-0 bottom-0 -translate-x-1/4 bg-green-500 h-4 w-4 rounded-full border-2 border-white"></span>
+        )}
       </div>
 
       <div className="flex flex-col">

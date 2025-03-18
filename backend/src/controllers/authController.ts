@@ -6,6 +6,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { IUser } from "../config/interface.ts";
 import { AuthenticationError } from "../errors/AuthenticationError.ts";
 import { InternalServerError } from "../errors/InternalServerError.ts";
+import { uploadFileToAWSfromUrl } from "../utils/awsFunctions.ts";
 
 // Regex for identifying whether the email and password are correctly formatted
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
@@ -106,9 +107,11 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
         firstName,
         surname,
         email,
-        profileImg,
         facebookAuth: true,
       });
+
+      const awsImageUrl = await uploadFileToAWSfromUrl(profileImg, user._id);
+      user.profileImg = awsImageUrl;
 
       user = await user.save();
       user.accessToken = generateJWTAccessToken(user._id);
@@ -152,16 +155,17 @@ export const loginGoogleUser = async (req: Request, res: Response, next: NextFun
       const firstName = splitName[0];
       const surname = splitName[1];
 
-      // Make the request to the Facebook Graph API
-      const profileImg = picture;
-
       user = new User({
         firstName,
         surname,
         email,
-        profileImg,
         googleAuth: true,
       });
+
+      if (picture) {
+        const awsImageUrl = await uploadFileToAWSfromUrl(picture, user._id);
+        user.profileImg = awsImageUrl;
+      }
 
       user = await user.save();
       user.accessToken = generateJWTAccessToken(user._id);

@@ -1,12 +1,23 @@
 import { IoMdSend } from "react-icons/io";
 import { ImFilePicture } from "react-icons/im";
+import { IoMdClose } from "react-icons/io";
 import defaultUserImg from "../assets/defaultUser.svg";
 import { useAuth } from "../context/AuthContext";
 import { useContext, useState } from "react";
 import { UsersContext } from "../pages/HomePage";
 import Message from "./Message";
+
 const MessagesInterface: React.FC = () => {
-  const { messages, sendMessage } = useContext(UsersContext);
+  const {
+    messagesInterfaceVisible,
+    setMessagesInterfaceVisible,
+    selectedUser,
+    setSelectedUser,
+    messages,
+    sendMessage,
+    loadingMessages,
+    messagesEndRef,
+  } = useContext(UsersContext);
 
   const [inputValue, setInputValue] = useState("");
 
@@ -18,47 +29,69 @@ const MessagesInterface: React.FC = () => {
   const handleMessageSend = (e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
     e.preventDefault();
     sendMessage(inputValue);
+    setInputValue("");
   };
 
-  return (
-    <div className="hidden w-3/4 lg:flex flex-col">
-      {/* User information */}
-      <div className="flex items-center gap-x-3 h-16 px-4 [box-shadow:_2px_2px_6px_rgb(0_0_0_/_10%)]">
-        <div className="w-10 h-10">
-          <img src={defaultUserImg} alt="user profile image" className="w-full h-full object-cover" />
-        </div>
-        <div className="flex flex-col justify-between">
-          <p className="capitalize">user name</p>
-          <p className="text-xs">email@gas.sd</p>
-        </div>
-      </div>
+  return loadingMessages ? (
+    <div className="w-12 h-12 rounded-full border-4 border-gray-200 self-center mx-auto"></div>
+  ) : (
+    !(Object.keys(selectedUser).length === 0) && (
+      <div className={"w-full h-full flex-col " + (messagesInterfaceVisible ? "flex" : "max-md:hidden")}>
+        {/* User information */}
+        <div className="sticky bg-white top-0 left-0 flex items-center gap-x-3 h-16 min-h-16 px-4 [box-shadow:_2px_2px_6px_rgb(0_0_0_/_10%)]">
+          <div className="w-10 h-10">
+            <img
+              src={selectedUser.profileImg ? selectedUser.profileImg : defaultUserImg}
+              alt="user image"
+              className="w-full h-full object-cover rounded-full"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="flex flex-col justify-between">
+            <p className="capitalize">
+              {selectedUser.firstName} {selectedUser.surname}
+            </p>
+            <p className="text-xs">{selectedUser.email}</p>
+          </div>
 
-      {/* { Messages container} */}
-      <div className="grow flex flex-col justify-end p-2 overflow-y-auto gap-y-1">
-        {messages.map((message, i) => (
-          <Message key={i} message={message}/>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="flex items-center gap-x-4 p-4">
-        <button className="cursor-pointer text-aeora">
-          <ImFilePicture className="text-xl" />
-        </button>
-        <form className="grow flex relative" onSubmit={handleMessageSend}>
-          <input
-            type="text"
-            placeholder="..."
-            value={inputValue}
-            onChange={handleInputChange}
-            className="w-full p-2 px-4 border border-gray-400/50 rounded-full outline-none"
-          />
-          <button type="submit" className="cursor-pointer text-aeora">
-            <IoMdSend className="text-xl absolute top-1/2 right-0 translate-y-[-50%] mr-3" />
+          <button
+            className="lg:hidden text-2xl ml-auto p-1 cursor-pointer"
+            onClick={() => {
+              setMessagesInterfaceVisible(false);
+              setSelectedUser({});
+            }}
+          >
+            <IoMdClose />
           </button>
-        </form>
+        </div>
+
+        {/* { Messages container} */}
+        <div className="flex flex-col overflow-y-auto mt-auto p-2 gap-y-1">
+          {messages.map((message, i) => (
+            <Message key={i} message={message} innerRef={messagesEndRef} />
+          ))}
+        </div>
+
+        {/* Input */}
+        <div className="sticky bg-white bottom-0 left-0 flex items-center gap-x-4 p-4">
+          <button className="cursor-pointer text-aeora">
+            <ImFilePicture className="text-xl" />
+          </button>
+          <form className="grow flex relative" onSubmit={handleMessageSend}>
+            <input
+              type="text"
+              placeholder="..."
+              value={inputValue}
+              onChange={handleInputChange}
+              className="w-full p-2 px-4 border border-gray-400/50 rounded-full outline-none"
+            />
+            <button type="submit" className="cursor-pointer text-aeora">
+              <IoMdSend className="text-xl absolute top-1/2 right-0 translate-y-[-50%] mr-3" />
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    )
   );
 };
 

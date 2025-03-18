@@ -6,7 +6,7 @@ const Navbar: React.FC = () => {
   const { userAuth, setUserAuth } = useAuth();
 
   return (
-    <nav className="sticky h-14 lg:h-full flex lg:flex-col justify-between items-center bg-gray-900 text-white">
+    <nav className="sticky h-14 min-h-14 lg:h-full flex lg:flex-col justify-between items-center bg-gray-900 text-white">
       <button className="h-full lg:h-16 lg:w-full flex items-center justify-center px-6 bg-linear-to-t from-aeora-400/40 to-transparent cursor-pointer relative after:absolute after:content=[''] after:w-full after:h-1 after:bottom-0 after:left-0 after:bg-aeora-400">
         <FaRegMessage />
       </button>

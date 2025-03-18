@@ -2,12 +2,14 @@ import User from "../models/UserModel.ts";
 import Message from "../models/MessageModel.ts";
 import type { NextFunction, Request, Response } from "express";
 import { InternalServerError } from "../errors/InternalServerError.ts";
+import { io, getReceiverSocketId } from "../services/socket.ts";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const loggedInUserId = req.user.id;
-    console.log("logged user id:", loggedInUserId);
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("firstName surname email profileImg");
+    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select(
+      "firstName surname email profileImg"
+    );
 
     res.status(200).json(filteredUsers);
   } catch (err: any) {
@@ -19,8 +21,6 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 export const getMessages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const senderId = req.user;
   const { receiverId } = req.body;
-  
-  console.log(senderId, receiverId)
 
   const findQuery = {
     $or: [
@@ -65,7 +65,13 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
 
     await newMessage.save();
 
-    res.status(200).json({ success: true, message: "Message sent" });
+    const receiverSocketId = getReceiverSocketId(receiver._id);
+    // If user is online then send the msg in real time
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    res.status(200).json({ success: true, message: "Message sent", newMessage });
     return;
   } catch (err: any) {
     // If any other errors happen throw 500 error
