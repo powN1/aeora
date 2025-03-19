@@ -11,6 +11,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
   surname,
   profileImg,
   lastMessage,
+  lastMessageByUser,
   read,
 }) => {
   const { setMessagesInterfaceVisible, users, selectedUser, setSelectedUser, setLoadingMessages } = useContext(UsersContext);
@@ -44,7 +45,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
         <p className="capitalize">
           {firstName} {surname}
         </p>
-        <p className={"" + (!read && "font-bold")}>{lastMessage}</p>
+        <p className={"" + (!read && "font-bold")}>{lastMessageByUser ? "You: " : ""}{lastMessage}</p>
       </div>
 
       {/* Read */}

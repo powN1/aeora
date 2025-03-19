@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/UserModel.ts";
 import Message from "../models/MessageModel.ts";
 import type { NextFunction, Request, Response } from "express";
@@ -10,6 +11,27 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select(
       "firstName surname email profileImg"
     );
+
+    for (const user of filteredUsers) {
+      const findQuery = {
+        $or: [
+          { senderId: loggedInUserId, receiverId: user._id },
+          { senderId: user._id, receiverId: loggedInUserId },
+        ],
+      };
+
+      const lastMessageWithUser = await Message.findOne(findQuery).sort({ createdAt: -1 });
+
+      if (lastMessageWithUser) {
+        user.lastMessage = {
+          text: lastMessageWithUser.text,
+          read: lastMessageWithUser.read,
+          sentByUser: lastMessageWithUser.senderId.toString() === loggedInUserId? true : false,
+        };
+      }
+    }
+
+    console.log(filteredUsers);
 
     res.status(200).json(filteredUsers);
   } catch (err: any) {

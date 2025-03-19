@@ -37,6 +37,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    lastMessage: {
+      text: {
+        type: String,
+        default: false,
+      },
+      read: {
+        type: Boolean,
+        default: false,
+      },
+      sentByUser: {
+        type: Boolean,
+      }
+    },
   },
   {
     timestamps: {
