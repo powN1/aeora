@@ -22,7 +22,6 @@ const MessagesList: React.FC = () => {
 
   useEffect(() => {
     setLocalUsers(users)
-    console.log('local users', users)
   }, [users])
 
   return (
@@ -67,9 +66,9 @@ const MessagesList: React.FC = () => {
               firstName={user.firstName}
               surname={user.surname}
               profileImg={user.profileImg}
-              lastMessage={user.lastMessage.text}
-              lastMessageByUser={user.lastMessage.sentByUser}
-              read={user.lastMessage.read}
+              lastMessage={user.lastMessage?.text}
+              lastMessageByUser={user.lastMessage?.sentByUser}
+              read={user.lastMessage?.read}
             />
           );
         })}

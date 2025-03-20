@@ -10,21 +10,26 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
   firstName,
   surname,
   profileImg,
-  lastMessage,
+  lastMessage = "",
   lastMessageByUser,
   read,
 }) => {
-  const { setMessagesInterfaceVisible, users, selectedUser, setSelectedUser, setLoadingMessages } = useContext(UsersContext);
-  const {
-    userAuth: { onlineUsers },
-  } = useAuth();
+  const { setMessagesInterfaceVisible, users, selectedUser, setSelectedUser, readMessage, setLoadingMessages } =
+    useContext(UsersContext);
 
-  const handleUserSelection = () => {
+  const { userAuth: { onlineUsers }, } = useAuth();
+
+  const handleUserSelection = async() => {
     const newSelectedUser = users.find((user) => user._id === id);
-    if(selectedUser === newSelectedUser) return;
+    if (selectedUser === newSelectedUser) return;
     setMessagesInterfaceVisible(true);
     setSelectedUser(newSelectedUser);
-    setLoadingMessages(true);
+
+    // If the last message hasn't been sent by the user and the user didin't read it then change
+    // the status of the message to read
+    if(newSelectedUser.lastMessage?.read === false && newSelectedUser.lastMessage.sentByUser === false) {
+      await readMessage(newSelectedUser._id)
+    }
   };
 
   return (
@@ -45,11 +50,14 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
         <p className="capitalize">
           {firstName} {surname}
         </p>
-        <p className={"" + (!read && "font-bold")}>{lastMessageByUser ? "You: " : ""}{lastMessage}</p>
+        <p className={"" + (!read && !lastMessageByUser && "font-bold")}>
+          {lastMessageByUser ? "You: " : ""}
+          {lastMessage}
+        </p>
       </div>
 
       {/* Read */}
-      {read && (
+      {(read && lastMessageByUser) && (
         <div className="self-end ml-auto text-aeora-400 text-xl">
           <IoCheckmarkDone />
         </div>

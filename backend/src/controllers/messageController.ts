@@ -26,12 +26,10 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
         user.lastMessage = {
           text: lastMessageWithUser.text,
           read: lastMessageWithUser.read,
-          sentByUser: lastMessageWithUser.senderId.toString() === loggedInUserId? true : false,
+          sentByUser: lastMessageWithUser.senderId.toString() === loggedInUserId ? true : false,
         };
       }
     }
-
-    console.log(filteredUsers);
 
     res.status(200).json(filteredUsers);
   } catch (err: any) {
@@ -94,6 +92,45 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
     }
 
     res.status(200).json({ success: true, message: "Message sent", newMessage });
+    return;
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
+export const readMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const senderId = req.user;
+  const { receiverId } = req.body;
+
+  try {
+    const receiver = await User.findOne({ _id: receiverId });
+
+    if (!receiverId) {
+      res.status(401).json({ error: "Provide receiver id" });
+      return;
+    }
+
+    if (!receiver) {
+      res.status(401).json({ error: "Receiver user not found" });
+      return;
+    }
+
+    const findQuery = {
+      $or: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    };
+
+    const lastMessageWithUser = await Message.findOne(findQuery).sort({ createdAt: -1 });
+
+    if (lastMessageWithUser) {
+      lastMessageWithUser.read = true;
+      await lastMessageWithUser.save();
+    }
+
+    res.status(200).json({ success: true, message: "Message read", lastMessageWithUser });
     return;
   } catch (err: any) {
     // If any other errors happen throw 500 error

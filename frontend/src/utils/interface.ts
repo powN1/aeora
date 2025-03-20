@@ -6,7 +6,7 @@ export interface UserAuth {
   email?: string;
   socket?: Socket;
   id?: string;
-  onlineUsers: string[],
+  onlineUsers: string[];
   accessToken: string | null;
 }
 
@@ -39,4 +39,5 @@ export interface MessageCardPreviewProps {
   profileImg: string;
   lastMessage?: string;
   read?: boolean;
+  lastMessageByUser?: boolean;
 }

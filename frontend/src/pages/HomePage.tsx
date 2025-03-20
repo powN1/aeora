@@ -57,6 +57,28 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const readMessage = async (selectedUserId: string) => {
+    console.log("id", selectedUserId);
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/messages/read-message`,
+        { receiverId: selectedUserId },
+        {
+          headers: { Authorization: `${userAuth.accessToken}` },
+        }
+      );
+      if (response) {
+        console.log(users);
+        setUsers((prevUsers) =>
+          prevUsers.map((user) => (user._id === selectedUserId ? { ...user, lastMessage: { ...user.lastMessage, read: true } } : user))
+        );
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Reading a message failed");
+      throw err;
+    }
+  };
+
   const subscribeToMessages = () => {
     if (Object.keys(selectedUser).length === 0) return;
     const socket = userAuth?.socket;
@@ -89,7 +111,7 @@ const HomePage: React.FC = () => {
       }
     };
     getUsers();
-  }, [userAuth]);
+  }, [userAuth, messages]);
 
   useEffect(() => {
     if (Object.keys(selectedUser).length !== 0) getMessages();
@@ -112,6 +134,7 @@ const HomePage: React.FC = () => {
         selectedUser,
         setSelectedUser,
         sendMessage,
+        readMessage,
         messages,
         messagesInterfaceVisible,
         setMessagesInterfaceVisible,

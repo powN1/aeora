@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 import type { NextFunction, Request, Response } from "express";
 import { AuthenticationError } from "../errors/AuthenticationError";
-import User from "../models/UserModel.ts"
+import User from "../models/UserModel.ts";
 
 export const generateJWTAccessToken = (userId: ObjectId) => {
   // Check if jwt secret access key exists in .env file
@@ -42,7 +42,6 @@ export const verifyJWT = async (req: Request, res: Response, next: NextFunction)
 
     req.user = user;
     next();
-
   } catch (err: any) {
     next(new AuthenticationError());
   }
