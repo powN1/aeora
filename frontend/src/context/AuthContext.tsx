@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import type { UserAuth } from "../utils/interface.ts";
+
 // Define types for auth state
 interface AuthContextType {
   userAuth: UserAuth | null; // Access token (or null if not authenticated)

@@ -27,8 +27,8 @@ const MessagesList: React.FC = () => {
   return (
     <div
       className={
-        "flex flex-col gap-y-2 lg:w-1/4 lg:min-w-1/4 lg:px-2 pt-3 border-r border-gray-400/30 " +
-        (messagesInterfaceVisible && "max-md:hidden")
+        "flex flex-col gap-y-2 lg:w-1/4 lg:min-w-1/4 lg:px-2 pt-3 border-r border-gray-400/30 sticky " +
+        (messagesInterfaceVisible && "max-lg:hidden")
       }
     >
       <div className="flex items-center gap-x-4 px-2 lg:px-0">
@@ -57,7 +57,7 @@ const MessagesList: React.FC = () => {
           )}
         </div>
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-y-auto">
         {localUsers.map((user, i) => {
           return (
             <MessageCardPreview

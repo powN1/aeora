@@ -4,9 +4,37 @@ import { toast } from "react-toastify";
 import { lookInSession, removeFromSession, storeInSession } from "./sessionService";
 import { UserRegister, UserLogin, UserAuth } from "../utils/interface";
 import { io, Socket } from "socket.io-client";
+import { stringify } from "flatted";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
+const changeProfilePicture = async (
+  pictureUrl: string,
+  userAuth: UserAuth,
+  setUserAuth: (user: UserAuth | null) => void
+) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/auth/change-profile-picture`,
+      { profileImg: pictureUrl },
+      { headers: { Authorization: `${userAuth.accessToken}` } }
+    );
+
+    if (response.data) {
+      console.log("pic url is:", response.data.profileImg);
+      const user: UserAuth = { ...userAuth, profileImg: response.data.profileImg };
+      const userInSession = lookInSession("user");
+      const userInSessionParsed = JSON.parse(userInSession);
+      const userSession = { ...userInSessionParsed, profileImg: response.data.profileImg };
+      storeInSession("user", JSON.stringify(userSession));
+      setUserAuth(user);
+      return user;
+    }
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Uploading profile picture failed");
+    throw err;
+  }
+};
 const checkAuthorization = (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
   let userInSession = lookInSession("user");
   if (userInSession) {
@@ -141,4 +169,4 @@ const disconnectSocket = (userAuth: UserAuth, setUserAuth: (user: UserAuth | nul
     return updatedState;
   });
 };
-export { checkAuthorization, login, loginGoogleUser, loginFacebookUser, logout, register };
+export { changeProfilePicture, checkAuthorization, login, loginGoogleUser, loginFacebookUser, logout, register };

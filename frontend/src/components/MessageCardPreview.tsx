@@ -23,6 +23,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
     const newSelectedUser = users.find((user) => user._id === id);
     if (selectedUser === newSelectedUser) return;
     setMessagesInterfaceVisible(true);
+    setLoadingMessages(true)
     setSelectedUser(newSelectedUser);
 
     // If the last message hasn't been sent by the user and the user didin't read it then change
@@ -38,7 +39,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
         <img
           src={profileImg ? profileImg : defaultUserImg}
           alt="user image"
-          className="rounded-full"
+          className="object-cover rounded-full"
           referrerPolicy="no-referrer"
         />
         {onlineUsers?.includes(id) && (

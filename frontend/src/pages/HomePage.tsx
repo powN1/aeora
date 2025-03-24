@@ -38,7 +38,10 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string, image: File) => {
+    console.log("got msg", message)
+    console.log("and image", image)
+    return;
     try {
       const response = await axios.post(
         `${BASE_URL}/api/messages/send-message`,
@@ -70,7 +73,9 @@ const HomePage: React.FC = () => {
       if (response) {
         console.log(users);
         setUsers((prevUsers) =>
-          prevUsers.map((user) => (user._id === selectedUserId ? { ...user, lastMessage: { ...user.lastMessage, read: true } } : user))
+          prevUsers.map((user) =>
+            user._id === selectedUserId ? { ...user, lastMessage: { ...user.lastMessage, read: true } } : user
+          )
         );
       }
     } catch (err: any) {

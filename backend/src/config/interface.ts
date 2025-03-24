@@ -11,8 +11,9 @@ export interface IUser {
 }
 
 export interface IMessage {
-  senderId: string,
-  receiverId: string
-  text: string
-  image: string
+  senderId: string;
+  receiverId: string;
+  text: string;
+  image: string;
+  read: boolean;
 }

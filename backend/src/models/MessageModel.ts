@@ -17,9 +17,12 @@ const messageSchema = new mongoose.Schema(
     text: {
       type: String,
     },
-    image: {
-      type: String,
-    },
+    images: [
+      {
+        type: ObjectId,
+        ref: "images",
+      },
+    ],
     read: {
       type: Boolean,
     },

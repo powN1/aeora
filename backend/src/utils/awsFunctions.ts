@@ -9,9 +9,33 @@ const s3 = new aws.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
-export const generateUploadUrl = async () => {
+export const generateUploadUrl = async (userId: string = "") => {
+  let imageName = "";
   const date = new Date();
-  const imageName = `${nanoid()}-${date.getTime()}.jpeg`;
+
+  // If it's a profile picture then put user id in the name
+  // and overwrite any existing file that already has this name (previous profile pic)
+  if (userId) {
+    const params = { Bucket: process.env.AWS_BUCKET_NAME };
+    const data = await s3.listObjects(params).promise();
+
+    let existingProfilePictures = [];
+
+    if (data) {
+      existingProfilePictures = data.Contents.filter((file) => file.Key.includes(userId)).map((file) => ({
+        Key: file.Key,
+      }));
+    }
+
+    if (existingProfilePictures.length !== 0) {
+      const params = { Bucket: process.env.AWS_BUCKET_NAME, Delete: { Objects: existingProfilePictures } };
+      const response = await s3.deleteObjects(params).promise();
+    }
+
+    imageName = `profile_pictures/${userId}-${date.getTime()}.jpeg`;
+  } else {
+    imageName = `${nanoid()}-${date.getTime()}.jpeg`;
+  }
 
   return await s3.getSignedUrlPromise("putObject", {
     Bucket: "aeora-messaging-app",
@@ -22,18 +46,33 @@ export const generateUploadUrl = async () => {
 };
 
 export const uploadFileToAWSfromUrl = async (fileUrl: string, userId: string = "") => {
-  console.log("user id is", userId);
   try {
     const imageResponse = await axios.get(fileUrl, {
       responseType: "arraybuffer",
     });
 
     let imageName = "";
+    const date = new Date();
 
     // If it's a profile picture then put user id in the name
-    if (userId) imageName = `profile_pictures/${userId}.jpeg`;
-    else {
-      const date = new Date();
+    if (userId) {
+      const params = { Bucket: process.env.AWS_BUCKET_NAME };
+      const data = await s3.listObjects(params).promise();
+
+      let existingProfilePictures = [];
+
+      if (data) {
+        existingProfilePictures = data.Contents.filter((file) => file.Key.includes(userId)).map((file) => ({
+          Key: file.Key,
+        }));
+      }
+
+      if (existingProfilePictures.length !== 0) {
+        const params = { Bucket: process.env.AWS_BUCKET_NAME, Delete: { Objects: existingProfilePictures } };
+        const response = await s3.deleteObjects(params).promise();
+      }
+      imageName = `profile_pictures/${userId}-${date.getTime()}.jpeg`;
+    } else {
       imageName = `${nanoid()}-${date.getTime()}.jpeg`;
     }
 

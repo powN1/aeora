@@ -6,7 +6,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { IUser } from "../config/interface.ts";
 import { AuthenticationError } from "../errors/AuthenticationError.ts";
 import { InternalServerError } from "../errors/InternalServerError.ts";
-import { uploadFileToAWSfromUrl } from "../utils/awsFunctions.ts";
+import { generateUploadUrl, uploadFileToAWSfromUrl } from "../utils/awsFunctions.ts";
 
 // Regex for identifying whether the email and password are correctly formatted
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
@@ -218,7 +218,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       email,
       password: hashedPassword,
     });
-
+    
     const savedUser = await user.save();
     user.id = savedUser._id;
     user.accessToken = generateJWTAccessToken(user._id);
@@ -235,6 +235,29 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       }
     }
 
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
+export const changeProfilePicture = async (req: Request, res: Response, next: NextFunction) => {
+  const { _id } = req.user;
+
+  const { profileImg } = req.body;
+
+  if (!profileImg) {
+    res.status(400).json({ success: false, message: "Picutre has to be provided" });
+    return;
+  }
+
+  try {
+    const user = await User.findOne({ _id });
+    if (user) {
+      user.profileImg = profileImg;
+      await user.save();
+      res.status(200).json({ profileImg });
+    }
+  } catch (err: any) {
     // If any other errors happen throw 500 error
     next(new InternalServerError());
   }

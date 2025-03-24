@@ -5,6 +5,7 @@ export interface UserAuth {
   surname?: string;
   email?: string;
   socket?: Socket;
+  profileImg?: string;
   id?: string;
   onlineUsers: string[];
   accessToken: string | null;
