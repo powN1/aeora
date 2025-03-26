@@ -23,8 +23,10 @@ const MessagesInterface: React.FC = () => {
   const pictureInputRef = useRef();
 
   const [inputValue, setInputValue] = useState("");
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
+  
+  const [selectedMessage, setSelectedMessage] = useState("");
 
   const handlePictureButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -35,57 +37,48 @@ const MessagesInterface: React.FC = () => {
   };
 
   const handlePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const img = e.target.files[0];
+    const images = e.target.files;
+    const imagesArray = Array.from(images);
 
     const fileSizeLimit = 1 * 1024 * 1024; // 2MB in bytes
+    const maxFiles = 20; // Set your maximum allowed number of files
 
-    if (img) {
-      if (img.size > fileSizeLimit) {
-        toast.error("File size exceeds 1MB limit");
+    if (imagesArray.length > maxFiles) {
+      toast.error(`Max ${maxFiles} images for upload`);
+      return;
+    }
+
+    // Check for exceeding file size and stop if any of files are exceeding
+    for (const image of imagesArray) {
+      if (image.size > fileSizeLimit) {
+        toast.error("Max 1MB file size");
         return;
       }
-
-      setSelectedImageFile(img);
-
-      const reader = new FileReader();
-
-      // When the file is loaded, set the preview URL to state
-      reader.onloadend = () => {
-        setImagePreviewUrl(reader.result);
-      };
-
-      reader.readAsDataURL(img);
     }
-    return;
 
-    if (img) {
-      const loadingToast = toast.loading("Uploading...");
-      try {
-        // Get a link for S3 file upload
-        const response = await axios.post(`${BASE_URL}/api/get-upload-url`, {
-          headers: { Authorization: `${userAuth.accessToken}` },
-        });
+    if (images) {
+      const newPreviewUrls: string[] = [];
+      const newSelectedImagesFiles: File[] = [];
 
-        if (response.data.uploadUrl) {
-          // If S3 link has been provided then upload it to S3
-          const url = response.data.uploadUrl;
-          const uploadedPictureUrl = await uploadImage(img, url);
+      // Set preview image urls
+      Array.from(images).forEach((file) => {
+        newSelectedImagesFiles.push(file);
 
-          if (uploadedPictureUrl) {
-            // If file has been successfully uploaded to S3 then change profile picture in DB
-            const changeProfilePictureRes = await changeProfilePicture(uploadedPictureUrl, userAuth, setUserAuth);
-            if (changeProfilePictureRes) {
-              // If all actions are successful inform the user and change profile picture
-              // console.log(changeProfilePictureRes);
-              toast.dismiss(loadingToast);
-              toast.success("Uploaded");
-            }
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+          // Add each file's preview URL to the new array
+          newPreviewUrls.push(reader.result as string);
+
+          // Update the state after all files have been processed
+          if (newPreviewUrls.length === images.length) {
+            setImagePreviewUrls(newPreviewUrls);
+            setSelectedImagesFiles(newSelectedImagesFiles);
           }
-        }
-      } catch (err: any) {
-        // toast.error(err.response?.data?.message || "Uploading a picture failed");
-        throw err;
-      }
+        };
+
+        reader.readAsDataURL(file);
+      });
     }
   };
 
@@ -106,30 +99,36 @@ const MessagesInterface: React.FC = () => {
     }
   };
 
-  const handleImageRemoval = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleImageRemoval = (e: React.MouseEvent<HTMLButtonElement>, i: number) => {
     e.preventDefault();
-    setImagePreviewUrl("");
-    setSelectedImageFile(null);
+    setImagePreviewUrls((prevUrls) => prevUrls.filter((_, idx) => idx !== i));
+    setSelectedImagesFiles((prevImages) => prevImages.filter((_, idx) => idx !== i));
   };
 
   const handleMessageSend = (e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
     e.preventDefault();
-    if (!inputValue.trim()) return; // Prevent sending empty messages
-    sendMessage(inputValue, selectedImageFile);
+    if (!inputValue.trim() && selectedImagesFiles.length === 0) return; // Prevent sending empty messages
+    if (inputValue.length !== 0) sendMessage(inputValue);
+    else if (selectedImagesFiles.length !== 0) sendMessage("", selectedImagesFiles);
     setInputValue("");
-    setImagePreviewUrl("");
-    setSelectedImageFile(null);
+    setImagePreviewUrls([]);
+    setSelectedImagesFiles([]);
   };
 
   return Object.keys(selectedUser).length === 0 ? (
-    <div className="hidden w-full h-full lg:flex flex-col justify-center items-center gap-y-3">
+    <div className="hidden w-19/25 h-full lg:flex flex-col justify-center items-center gap-y-3">
       <div className="w-34 lg:w-38 mt-8">
         <img src={logoExtended} alt="logo" className="w-full h-full object-cover" />
       </div>
       <h2 className="text-xl">Welcome to Aeora messaging app</h2>
     </div>
   ) : (
-    <div className={"w-full grow flex-col " + (messagesInterfaceVisible ? "flex" : "max-md:hidden")}>
+    <div
+      className={
+        "h-full w-full max-w-full lg:w-19/25 lg:max-w-19/25 flex-col " +
+        (messagesInterfaceVisible ? "flex" : "max-md:hidden")
+      }
+    >
       {/* User information */}
       <div className="sticky bg-white top-0 left-0 flex items-center gap-x-3 h-16 min-h-16 px-4 [box-shadow:_2px_2px_6px_rgb(0_0_0_/_10%)]">
         <div className="w-10 h-10">
@@ -166,38 +165,52 @@ const MessagesInterface: React.FC = () => {
       ) : (
         <div className="flex flex-col overflow-y-auto mt-auto p-2 gap-y-1">
           {messages.map((message, i) => (
-            <Message key={i} message={message} innerRef={messagesEndRef} />
+            <Message
+              key={i}
+              selectedMessage={selectedMessage}
+              setSelectedMessage={setSelectedMessage}
+              message={message}
+              innerRef={messagesEndRef}
+            />
           ))}
         </div>
       )}
 
       {/* Bottom input */}
-      <div className="sticky bg-white bottom-0 left-0 flex items-center">
+      <div className="sticky bottom-0 left-0 bg-white flex items-center">
         <input
           id="uploadPicture"
           ref={pictureInputRef}
           type="file"
           accept=".png, .jpg, .jpeg"
           hidden
+          multiple
           onChange={handlePictureUpload}
         />
 
-        <form className="w-full flex items-end gap-x-2 relative py-2 px-3" onSubmit={handleMessageSend}>
+        <form className="w-full max-w-full flex items-end gap-x-2 relative py-2 px-2" onSubmit={handleMessageSend}>
           {/* Image upload */}
-          <button className="cursor-pointer text-aeora py-1" onClick={handlePictureButtonClick}>
+          <button
+            className="grow flex justify-center items-center cursor-pointer text-aeora py-1"
+            onClick={handlePictureButtonClick}
+          >
             <ImFilePicture className="text-xl" />
           </button>
 
-          <div className={"w-full flex flex-col bg-gray-400/25 rounded-md"}>
-            {imagePreviewUrl && (
-              <div className="relative flex justify-end p-2">
-                <img src={imagePreviewUrl} alt="" className="w-20 h-20 self-end m-3 rounded-sm" />
-                <button
-                  className="absolute top-0 right-0 translate-x-[-25%] translate-y-[25%] p-1 bg-aeora rounded-full cursor-pointer"
-                  onClick={handleImageRemoval}
-                >
-                  <IoMdClose className="text-xl" />
-                </button>
+          <div className={"w-full max-w-[84%] lg:max-w-[95%] flex flex-col bg-gray-400/25 rounded-md"}>
+            {imagePreviewUrls.length !== 0 && (
+              <div className="w-full max-w-full flex flex-row-reverse p-5 gap-x-5 overflow-x-auto">
+                {imagePreviewUrls.map((image, i) => (
+                  <div key={i} className="relative w-20 h-20 flex-shrink-0">
+                    <img src={image} alt="" className="w-full h-full rounded-sm" />
+                    <button
+                      className="absolute top-0 right-0 translate-x-[50%] translate-y-[-50%] p-1 bg-aeora rounded-full cursor-pointer"
+                      onClick={(e) => handleImageRemoval(e, i)}
+                    >
+                      <IoMdClose className="text-xl" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
             {/* Text input */}
@@ -212,7 +225,7 @@ const MessagesInterface: React.FC = () => {
           </div>
 
           {/* Send button */}
-          <button type="submit" className="cursor-pointer text-aeora py-1">
+          <button type="submit" className="grow flex justify-center items-center cursor-pointer text-aeora py-1">
             <IoMdSend className="text-xl" />
           </button>
         </form>

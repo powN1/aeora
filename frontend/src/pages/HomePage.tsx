@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import axios from "axios";
 import { ToastContainer } from "react-toastify";
 import { toast } from "react-toastify/unstyled";
+import uploadImage from "../common/aws";
 
 export const UsersContext = createContext({});
 
@@ -17,6 +18,8 @@ const HomePage: React.FC = () => {
   const [messages, setMessages] = useState([]);
   const [messagesInterfaceVisible, setMessagesInterfaceVisible] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
+  
+  const [selectedMessage, setSelectedMessage] = useState();
 
   const messagesEndRef = useRef(null);
 
@@ -38,21 +41,40 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const sendMessage = async (message: string, image: File) => {
-    console.log("got msg", message)
-    console.log("and image", image)
-    return;
+  const sendMessage = async (message: string, images: Array<File>) => {
+    let tempImagesFileNames = [];
+
     try {
+      if (images && images.length !== 0) {
+        const imageUploadLinksResponse = await Promise.all(
+          images.map(async (img) => {
+            const response = await axios.post(`${BASE_URL}/api/get-upload-url`, {
+              headers: { Authorization: `${userAuth.accessToken}` },
+            });
+            return { img, uploadUrl: response.data.url, imageFileName: response.data.imageFileName };
+          })
+        );
+
+        await Promise.all(
+          imageUploadLinksResponse.map(async ({ img, uploadUrl }) => {
+            return uploadImage(img, uploadUrl);
+          })
+        );
+
+        tempImagesFileNames = imageUploadLinksResponse.map((image) => image.imageFileName);
+      }
+
+      console.log('sending msg with', message, tempImagesFileNames)
       const response = await axios.post(
         `${BASE_URL}/api/messages/send-message`,
-        { message, receiverId: selectedUser._id },
+        { message, tempImagesFileNames, receiverId: selectedUser._id },
         {
           headers: { Authorization: `${userAuth.accessToken}` },
         }
       );
       if (response) {
         console.log("send message response", response);
-        setMessages([...messages, response.data.newMessage]);
+        setMessages((prevMessages) => [...prevMessages, response.data.newMessage]);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Sending a message failed");
@@ -60,6 +82,23 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/messages/delete-message`,
+        { messageId, receiverId: selectedUser._id },
+        {
+          headers: { Authorization: `${userAuth.accessToken}` },
+        }
+      );
+      if (response) {
+        setMessages((prevMessages) => prevMessages.filter((message) => message._id !== messageId));
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Deleting a message failed");
+      throw err;
+    }
+  };
   const readMessage = async (selectedUserId: string) => {
     console.log("id", selectedUserId);
     try {
@@ -90,7 +129,11 @@ const HomePage: React.FC = () => {
 
     if (socket) {
       socket.on("newMessage", (newMessage) => {
-        setMessages([...messages, newMessage]);
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+      });
+
+      socket.on("messageDeleted", (deletedMessageId) => {
+        setMessages((prevMessages) => prevMessages.filter(message => message._id !== deletedMessageId));
       });
     }
   };
@@ -101,6 +144,7 @@ const HomePage: React.FC = () => {
 
     if (socket) {
       socket.off("newMessage");
+      socket.off("messageDeleted");
     }
   };
 
@@ -139,8 +183,11 @@ const HomePage: React.FC = () => {
         selectedUser,
         setSelectedUser,
         sendMessage,
+        deleteMessage,
         readMessage,
         messages,
+        selectedMessage,
+        setSelectedMessage,
         messagesInterfaceVisible,
         setMessagesInterfaceVisible,
         loadingMessages,
@@ -148,7 +195,7 @@ const HomePage: React.FC = () => {
         messagesEndRef,
       }}
     >
-      <main className="h-screen flex flex-col lg:flex-row">
+      <main className="h-screen w-screen max-w-screen flex flex-col lg:flex-row">
         <ToastContainer position="top-center" />
         <Navbar />
         <MessagesList />

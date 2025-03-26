@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
   return (
     <nav
       className={
-        "h-14 min-h-14 lg:h-full flex lg:flex-col justify-between items-center bg-gray-900 text-white " +
+        "lg:w-1/25 h-14 min-h-14 lg:h-full flex lg:flex-col justify-between items-center bg-gray-900 text-white " +
         (messagesInterfaceVisible ? "max-lg:hidden" : "")
       }
     >
@@ -32,12 +32,12 @@ const Navbar: React.FC = () => {
         <FaRegMessage />
       </NavLink>
 
-      <div className="h-full lg:h-auto flex lg:flex-col">
+      <div className="h-full w-full lg:h-auto flex lg:flex-col">
         {/* Settings */}
         <NavLink
           to="/settings"
           className={
-            "h-full lg:h-16 flex items-center justify-center px-6 cursor-pointer text-xl text-gray-400 hover:text-white " +
+            "h-full lg:h-16 flex items-center justify-center cursor-pointer text-xl text-gray-400 hover:text-white " +
             (location.pathname === "/settings" &&
               "bg-linear-to-t from-aeora-400/40 to-transparent relative after:absolute after:content=[''] after:w-full after:h-1 after:bottom-0 after:left-0 after:bg-aeora-400 text-white")
           }

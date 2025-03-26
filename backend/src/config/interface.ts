@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export interface IUser {
   _id: string;
   firstName: string;
@@ -11,9 +13,15 @@ export interface IUser {
 }
 
 export interface IMessage {
-  senderId: string;
-  receiverId: string;
+  senderId: ObjectId;
+  receiverId: ObjectId;
+  conversationId: ObjectId;
   text: string;
-  image: string;
+  images: string[];
   read: boolean;
+}
+
+export interface IConversation {
+  participants: ObjectId[];
+  messages: ObjectId[];
 }

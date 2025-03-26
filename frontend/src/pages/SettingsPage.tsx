@@ -69,7 +69,7 @@ export const SettingsPage = () => {
         <ToastContainer position="top-center" />
         <Navbar />
 
-        <div className="w-full flex flex-col justify-center items-center gap-y-10 px-4 max-md:pt-16">
+        <div className="w-24/25 flex flex-col justify-center items-center gap-y-10 px-4 max-md:pt-16">
           <div className="rounded-full h-40 w-40">
             <img
               src={userAuth.profileImg ? userAuth.profileImg : defaultUserImg}

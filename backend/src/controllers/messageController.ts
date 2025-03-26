@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
 import User from "../models/UserModel.ts";
 import Message from "../models/MessageModel.ts";
+import Conversation from "../models/ConversationModel.ts";
 import type { NextFunction, Request, Response } from "express";
 import { InternalServerError } from "../errors/InternalServerError.ts";
 import { io, getReceiverSocketId } from "../services/socket.ts";
+import { nanoid } from "nanoid";
+import s3 from "../utils/awsFunctions.ts";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -55,27 +58,88 @@ export const getMessages = async (req: Request, res: Response, next: NextFunctio
   } catch (err: any) {}
 };
 
-export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const senderId = req.user;
-  const { message, receiverId } = req.body;
+export const deleteMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const { messageId, receiverId } = req.body;
 
   try {
-    if (!message || message.length === 0) {
-      res.status(401).json({ error: "Message can't be empty" });
+    const receiver = await User.findOne({ _id: receiverId });
+
+    console.log("receiver", receiver);
+    if (!receiver) {
+      res.status(401).json({ error: "Receiver user not found" });
       return;
     }
 
-    const receiver = await User.findOne({ _id: receiverId });
+    // If there is no messageId
+    if (!messageId) {
+      res.status(401).json({ error: "Message id required" });
+      return;
+    }
+
+    const conversationFindQuery = {
+      messages: { $in: [new mongoose.Types.ObjectId(messageId)] },
+    };
+
+    // Find a conversation with this particular message in it
+    let conversation = await Conversation.findOne(conversationFindQuery);
+    console.log("convo", conversation);
+    let message = await Message.findOne(new mongoose.Types.ObjectId(messageId));
+    console.log("message", message);
+
+    if (!conversation || !message) {
+      res.status(404).json({ success: false, message: "Conversation or message not found" });
+      return;
+    }
+
+    // Remove message from the conversation document
+    conversation.messages.filter((message) => message._id !== messageId);
+    await conversation.save();
+    await message.deleteOne();
+
+    const receiverSocketId = getReceiverSocketId(receiver._id);
+    // If user is online then send the msg in real time
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageDeleted", messageId);
+    }
+
+    res.status(200).json({ success: true, message: "Message deleted", messageId: message._id });
+    return;
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
+export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const senderId = req.user;
+  const { message, tempImagesFileNames, receiverId } = req.body;
+
+  try {
+    // If there is no message or no photos
+    if ((!message || message.length === 0) && (!tempImagesFileNames || tempImagesFileNames.length === 0)) {
+      res.status(401).json({ error: "Message or images required" });
+      return;
+    }
 
     if (!receiverId) {
       res.status(401).json({ error: "Provide receiver id" });
       return;
     }
 
+    const receiver = await User.findOne({ _id: receiverId });
+
     if (!receiver) {
       res.status(401).json({ error: "Receiver user not found" });
       return;
     }
+
+    const conversationFindQuery = {
+      participants: { $all: [senderId, receiverId] },
+    };
+
+    // Check if a conversation already exists and if yes then get conversationId
+    let conversation = await Conversation.findOne(conversationFindQuery);
+
     const newMessage = new Message({
       senderId: senderId,
       receiverId: receiver._id,
@@ -83,6 +147,49 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
       read: false,
     });
 
+    let conversationId;
+
+    if (conversation) {
+      conversationId = conversation._id;
+    } else {
+      conversation = new Conversation({ participants: [senderId, receiverId], messages: [] });
+
+      conversationId = conversation._id;
+    }
+
+    newMessage.conversationId = conversationId;
+
+    // Add message to the conversation document
+    conversation.messages.push(newMessage._id);
+
+    // Move the images in S3 to the correct folder (from temp to conversation/)
+    if (tempImagesFileNames && tempImagesFileNames.length > 0) {
+      const finalFileNames = await Promise.all(
+        tempImagesFileNames.map(async (tempFileName: string) => {
+          const finalFileName = `messages/conversation-${conversationId}/${newMessage._id}-${nanoid()}-${Date.now()}.jpeg`;
+
+          await s3
+            .copyObject({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              CopySource: `${process.env.AWS_BUCKET_NAME}/${tempFileName}`,
+              Key: finalFileName,
+            })
+            .promise();
+
+          s3.deleteObject({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: tempFileName,
+          }).promise();
+
+          return `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${finalFileName}`;
+        })
+      );
+
+      // Update the message with the final image URLs
+      newMessage.images = finalFileNames;
+    }
+
+    await conversation.save();
     await newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(receiver._id);

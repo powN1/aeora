@@ -17,19 +17,21 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
   const { setMessagesInterfaceVisible, users, selectedUser, setSelectedUser, readMessage, setLoadingMessages } =
     useContext(UsersContext);
 
-  const { userAuth: { onlineUsers }, } = useAuth();
+  const {
+    userAuth: { onlineUsers },
+  } = useAuth();
 
-  const handleUserSelection = async() => {
+  const handleUserSelection = async () => {
     const newSelectedUser = users.find((user) => user._id === id);
     if (selectedUser === newSelectedUser) return;
     setMessagesInterfaceVisible(true);
-    setLoadingMessages(true)
+    setLoadingMessages(true);
     setSelectedUser(newSelectedUser);
 
     // If the last message hasn't been sent by the user and the user didin't read it then change
     // the status of the message to read
-    if(newSelectedUser.lastMessage?.read === false && newSelectedUser.lastMessage.sentByUser === false) {
-      await readMessage(newSelectedUser._id)
+    if (newSelectedUser.lastMessage?.read === false && newSelectedUser.lastMessage.sentByUser === false) {
+      await readMessage(newSelectedUser._id);
     }
   };
 
@@ -58,7 +60,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
       </div>
 
       {/* Read */}
-      {(read && lastMessageByUser) && (
+      {read && lastMessageByUser && (
         <div className="self-end ml-auto text-aeora-400 text-xl">
           <IoCheckmarkDone />
         </div>

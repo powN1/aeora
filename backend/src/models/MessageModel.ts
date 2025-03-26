@@ -14,13 +14,16 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    conversationId: {
+      type: ObjectId,
+      required: true,
+    },
     text: {
       type: String,
     },
     images: [
       {
-        type: ObjectId,
-        ref: "images",
+        type: String,
       },
     ],
     read: {

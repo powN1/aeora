@@ -21,16 +21,17 @@ const MessagesList: React.FC = () => {
   };
 
   useEffect(() => {
-    setLocalUsers(users)
-  }, [users])
+    setLocalUsers(users);
+  }, [users]);
 
   return (
     <div
       className={
-        "flex flex-col gap-y-2 lg:w-1/4 lg:min-w-1/4 lg:px-2 pt-3 border-r border-gray-400/30 sticky " +
+        "flex flex-col gap-y-2 lg:w-5/25 lg:min-w-5/25 lg:px-2 pt-3 border-r border-gray-400/30 sticky " +
         (messagesInterfaceVisible && "max-lg:hidden")
       }
     >
+      {/* Search input */}
       <div className="flex items-center gap-x-4 px-2 lg:px-0">
         <div className="grow flex relative">
           <input
@@ -49,7 +50,7 @@ const MessagesList: React.FC = () => {
               className="text-xl absolute top-1/2 right-0 translate-y-[-50%] mr-3 cursor-pointer"
               onClick={() => {
                 setInputValue("");
-                setLocalUsers(users)
+                setLocalUsers(users);
               }}
             >
               <IoMdClose className="" />
@@ -57,7 +58,9 @@ const MessagesList: React.FC = () => {
           )}
         </div>
       </div>
-      <div className="flex flex-col overflow-y-auto">
+
+      {/* Users */}
+      <div className="flex flex-col overflow-y-scroll">
         {localUsers.map((user, i) => {
           return (
             <MessageCardPreview

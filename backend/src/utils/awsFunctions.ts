@@ -1,6 +1,7 @@
 import aws from "aws-sdk";
 import { nanoid } from "nanoid";
 import axios from "axios";
+import { ObjectId } from "mongodb";
 
 // AWS S3 setup
 const s3 = new aws.S3({
@@ -29,20 +30,22 @@ export const generateUploadUrl = async (userId: string = "") => {
 
     if (existingProfilePictures.length !== 0) {
       const params = { Bucket: process.env.AWS_BUCKET_NAME, Delete: { Objects: existingProfilePictures } };
-      const response = await s3.deleteObjects(params).promise();
+      await s3.deleteObjects(params).promise();
     }
 
     imageName = `profile_pictures/${userId}-${date.getTime()}.jpeg`;
   } else {
-    imageName = `${nanoid()}-${date.getTime()}.jpeg`;
+    imageName = `messages/temp/${nanoid()}-${Date.now()}.jpeg`;
   }
 
-  return await s3.getSignedUrlPromise("putObject", {
-    Bucket: "aeora-messaging-app",
+  let uploadUrl = await s3.getSignedUrlPromise("putObject", {
+    Bucket: process.env.AWS_BUCKET_NAME,
     Key: imageName,
     Expires: 1000,
     ContentType: "image/jpeg",
   });
+
+  return { uploadUrl, imageName };
 };
 
 export const uploadFileToAWSfromUrl = async (fileUrl: string, userId: string = "") => {
@@ -73,11 +76,11 @@ export const uploadFileToAWSfromUrl = async (fileUrl: string, userId: string = "
       }
       imageName = `profile_pictures/${userId}-${date.getTime()}.jpeg`;
     } else {
-      imageName = `${nanoid()}-${date.getTime()}.jpeg`;
+      imageName = `messages/temp/${nanoid()}-${Date.now()}.jpeg`;
     }
 
     const uploadParams = {
-      Bucket: "aeora-messaging-app",
+      Bucket: process.env.AWS_BUCKET_NAME,
       Key: imageName,
       Body: Buffer.from(imageResponse.data, "binary"),
       ContentType: "image/jpeg",
@@ -91,3 +94,5 @@ export const uploadFileToAWSfromUrl = async (fileUrl: string, userId: string = "
     throw new Error("Failed to upload file to S3");
   }
 };
+
+export default s3;

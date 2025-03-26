@@ -31,11 +31,19 @@ app.post("/api/get-upload-url", async (req: Request, res: Response, next: NextFu
 
   try {
     let url;
-    if (userId) url = await generateUploadUrl(userId);
-    else url = await generateUploadUrl();
+    let imageFileName;
+    if (userId) {
+      const { uploadUrl, imageName } = await generateUploadUrl(userId);
+      url = uploadUrl;
+      imageFileName = imageName;
+    } else {
+      const { uploadUrl, imageName } = await generateUploadUrl();
+      url = uploadUrl;
+      imageFileName = imageName;
+    }
 
     if (url) {
-      res.status(200).json({ uploadUrl: url });
+      res.status(200).json({ url, imageFileName });
     }
   } catch (err: any) {
     // If any other errors happen throw 500 error
