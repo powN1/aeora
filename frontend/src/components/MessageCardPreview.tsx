@@ -37,7 +37,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
 
   return (
     <div className="flex gap-x-6 p-4 cursor-pointer hover:bg-gray-400/30 rounded-lg" onClick={handleUserSelection}>
-      <div className="relative flex justify-center items-center w-12 h-12">
+      <div className="relative flex justify-center items-center min-w-12 min-h-12 w-12 h-12">
         <img
           src={profileImg ? profileImg : defaultUserImg}
           alt="user image"
@@ -53,7 +53,7 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
         <p className="capitalize">
           {firstName} {surname}
         </p>
-        <p className={"" + (!read && !lastMessageByUser && "font-bold")}>
+        <p className={"line-clamp-1 w-full" + (!read && !lastMessageByUser && "font-bold")}>
           {lastMessageByUser ? "You: " : ""}
           {lastMessage}
         </p>

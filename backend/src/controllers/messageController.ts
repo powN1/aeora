@@ -23,7 +23,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
         ],
       };
 
-      const lastMessageWithUser = await Message.findOne(findQuery).sort({ createdAt: -1 });
+      const lastMessageWithUser = await Message.findOne(findQuery).populate("replyingTo").sort({ createdAt: -1 });
 
       if (lastMessageWithUser) {
         user.lastMessage = {
@@ -53,7 +53,7 @@ export const getMessages = async (req: Request, res: Response, next: NextFunctio
   };
 
   try {
-    const messages = await Message.find(findQuery);
+    const messages = await Message.find(findQuery).populate("replyingTo");
     res.status(200).json({ messages });
   } catch (err: any) {}
 };
@@ -112,7 +112,7 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
 
 export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const senderId = req.user;
-  const { message, tempImagesFileNames, receiverId } = req.body;
+  const { message, tempImagesFileNames, replyingMessageId, receiverId } = req.body;
 
   try {
     // If there is no message or no photos
@@ -159,6 +159,17 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
 
     newMessage.conversationId = conversationId;
 
+    if (replyingMessageId) {
+      const replyingMsg = await Message.findOne({ _id: replyingMessageId });
+
+      if (!replyingMsg) {
+        res.status(401).json({ error: "Replying message not found" });
+        return;
+      }
+
+      newMessage.replyingTo = replyingMsg._id;
+    }
+
     // Add message to the conversation document
     conversation.messages.push(newMessage._id);
 
@@ -190,15 +201,17 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
     }
 
     await conversation.save();
-    await newMessage.save();
+
+    const newMsgSaved = await newMessage.save();
+    const populatedMsg = await Message.findById(newMsgSaved._id).populate("replyingTo");
 
     const receiverSocketId = getReceiverSocketId(receiver._id);
     // If user is online then send the msg in real time
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", newMessage);
+      io.to(receiverSocketId).emit("newMessage", populatedMsg);
     }
 
-    res.status(200).json({ success: true, message: "Message sent", newMessage });
+    res.status(200).json({ success: true, message: "Message sent", newMessage: populatedMsg });
     return;
   } catch (err: any) {
     // If any other errors happen throw 500 error

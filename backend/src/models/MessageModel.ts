@@ -29,8 +29,12 @@ const messageSchema = new mongoose.Schema(
     read: {
       type: Boolean,
     },
+    replyingTo: {
+      type: ObjectId,
+      ref: "Message"
+    }
   },
   { timestamps: true }
 );
 
-export default mongoose.model<IMessage>("message", messageSchema);
+export default mongoose.model<IMessage>("Message", messageSchema);

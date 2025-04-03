@@ -19,6 +19,7 @@ export interface IMessage {
   text: string;
   images: string[];
   read: boolean;
+  replyingTo: ObjectId;
 }
 
 export interface IConversation {

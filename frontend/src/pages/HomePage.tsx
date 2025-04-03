@@ -19,8 +19,6 @@ const HomePage: React.FC = () => {
   const [messagesInterfaceVisible, setMessagesInterfaceVisible] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
   
-  const [selectedMessage, setSelectedMessage] = useState();
-
   const messagesEndRef = useRef(null);
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -41,7 +39,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const sendMessage = async (message: string, images: Array<File>) => {
+  const sendMessage = async (message: string, images: Array<File>, replyingMessageId: string) => {
     let tempImagesFileNames = [];
 
     try {
@@ -67,7 +65,7 @@ const HomePage: React.FC = () => {
       console.log('sending msg with', message, tempImagesFileNames)
       const response = await axios.post(
         `${BASE_URL}/api/messages/send-message`,
-        { message, tempImagesFileNames, receiverId: selectedUser._id },
+        { message, tempImagesFileNames, replyingMessageId, receiverId: selectedUser._id },
         {
           headers: { Authorization: `${userAuth.accessToken}` },
         }
@@ -186,8 +184,6 @@ const HomePage: React.FC = () => {
         deleteMessage,
         readMessage,
         messages,
-        selectedMessage,
-        setSelectedMessage,
         messagesInterfaceVisible,
         setMessagesInterfaceVisible,
         loadingMessages,

@@ -21,12 +21,14 @@ const MessagesInterface: React.FC = () => {
   } = useContext(UsersContext);
 
   const pictureInputRef = useRef();
+  const textareaRef = useRef();
 
   const [inputValue, setInputValue] = useState("");
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [selectedImagesFiles, setSelectedImagesFiles] = useState<File[]>([]);
-  
-  const [selectedMessage, setSelectedMessage] = useState("");
+
+  const [selectedMessage, setSelectedMessage] = useState({});
+  const [isReplying, setIsReplying] = useState(false);
 
   const handlePictureButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -108,13 +110,19 @@ const MessagesInterface: React.FC = () => {
   const handleMessageSend = (e: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
     e.preventDefault();
     if (!inputValue.trim() && selectedImagesFiles.length === 0) return; // Prevent sending empty messages
-    if (inputValue.length !== 0) sendMessage(inputValue);
-    else if (selectedImagesFiles.length !== 0) sendMessage("", selectedImagesFiles);
+    if (inputValue.length !== 0) sendMessage(inputValue, [], selectedMessage._id);
+    else if (selectedImagesFiles.length !== 0) sendMessage("", selectedImagesFiles, selectedMessage._id);
     setInputValue("");
     setImagePreviewUrls([]);
     setSelectedImagesFiles([]);
+    setSelectedMessage({});
+    setIsReplying(false);
   };
 
+  const handleMessageReplyingClosure = () => {
+    setIsReplying(false);
+    setSelectedMessage({});
+  };
   return Object.keys(selectedUser).length === 0 ? (
     <div className="hidden w-19/25 h-full lg:flex flex-col justify-center items-center gap-y-3">
       <div className="w-34 lg:w-38 mt-8">
@@ -167,8 +175,10 @@ const MessagesInterface: React.FC = () => {
           {messages.map((message, i) => (
             <Message
               key={i}
+              textareaRef={textareaRef}
               selectedMessage={selectedMessage}
               setSelectedMessage={setSelectedMessage}
+              setIsReplying={setIsReplying}
               message={message}
               innerRef={messagesEndRef}
             />
@@ -198,6 +208,24 @@ const MessagesInterface: React.FC = () => {
           </button>
 
           <div className={"w-full max-w-[84%] lg:max-w-[95%] flex flex-col bg-gray-400/25 rounded-md"}>
+            {/* Replying to */}
+            {isReplying && (
+              <div className="flex items-center w-full lg:max-w-1/3 px-2 py-3 gap-x-2">
+                <div className="text-gray-900 line-clamp-1 rounded-md py-1 px-2 bg-gray-400/50">
+                  {selectedMessage.text && selectedMessage.text}
+                  {selectedMessage.images && selectedMessage.images[0] && (
+                    <div className="w-16 h-16 rounded-sm">
+                      <img src={selectedMessage.images[0]} className="w-full h-full object-cover rounded-sm" />
+                    </div>
+                  )}
+                </div>
+                <button className="cursor-pointer" onClick={handleMessageReplyingClosure}>
+                  <IoMdClose className="text-xl" />
+                </button>
+              </div>
+            )}
+
+            {/* Image preview */}
             {imagePreviewUrls.length !== 0 && (
               <div className="w-full max-w-full flex flex-row-reverse p-5 gap-x-5 overflow-x-auto">
                 {imagePreviewUrls.map((image, i) => (
@@ -215,6 +243,7 @@ const MessagesInterface: React.FC = () => {
             )}
             {/* Text input */}
             <textarea
+              ref={textareaRef}
               placeholder="..."
               value={inputValue}
               onChange={handleTextareaChange}
