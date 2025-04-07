@@ -6,6 +6,7 @@ import defaultUserImg from "../assets/defaultUser.svg";
 import { useContext, useRef, useState } from "react";
 import { UsersContext } from "../pages/HomePage";
 import Message from "./Message";
+import Loader from "../components/Loader";
 import { toast } from "react-toastify";
 
 const MessagesInterface: React.FC = () => {
@@ -133,7 +134,7 @@ const MessagesInterface: React.FC = () => {
   ) : (
     <div
       className={
-        "h-full w-full max-w-full lg:w-19/25 lg:max-w-19/25 flex-col " +
+        "h-full w-full max-w-full lg:w-19/25 lg:max-w-19/25 flex-col bg-repeat aeora-pattern-bg " +
         (messagesInterfaceVisible ? "flex" : "max-md:hidden")
       }
     >
@@ -167,22 +168,21 @@ const MessagesInterface: React.FC = () => {
 
       {/* { Messages container} */}
       {loadingMessages ? (
-        <div className="w-full h-full flex flex-col justify-center items-center">
-          <div className="w-12 h-12 rounded-full border-4 border-gray-200 self-center mx-auto"></div>
-        </div>
+        <Loader />
       ) : (
         <div className="flex flex-col overflow-y-auto mt-auto p-2 gap-y-1">
           {messages.map((message, i) => (
             <Message
               key={i}
+              i={i}
               textareaRef={textareaRef}
               selectedMessage={selectedMessage}
               setSelectedMessage={setSelectedMessage}
               setIsReplying={setIsReplying}
               message={message}
-              innerRef={messagesEndRef}
             />
           ))}
+          <div ref={messagesEndRef} />
         </div>
       )}
 

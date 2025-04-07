@@ -40,7 +40,7 @@ export const verifyJWT = async (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    req.user = user;
+    req.userId = decoded.id;
     next();
   } catch (err: any) {
     next(new AuthenticationError());

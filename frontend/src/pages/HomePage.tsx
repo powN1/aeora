@@ -18,7 +18,8 @@ const HomePage: React.FC = () => {
   const [messages, setMessages] = useState([]);
   const [messagesInterfaceVisible, setMessagesInterfaceVisible] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
-  
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
   const messagesEndRef = useRef(null);
 
   const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -62,7 +63,7 @@ const HomePage: React.FC = () => {
         tempImagesFileNames = imageUploadLinksResponse.map((image) => image.imageFileName);
       }
 
-      console.log('sending msg with', message, tempImagesFileNames)
+      console.log("sending msg with", message, tempImagesFileNames);
       const response = await axios.post(
         `${BASE_URL}/api/messages/send-message`,
         { message, tempImagesFileNames, replyingMessageId, receiverId: selectedUser._id },
@@ -76,6 +77,28 @@ const HomePage: React.FC = () => {
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Sending a message failed");
+      throw err;
+    }
+  };
+
+  const reactToMessage = async (messageId: string, emoji: string) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/messages/react-to-message`,
+        { messageId, emoji, receiverId: selectedUser._id },
+        {
+          headers: { Authorization: `${userAuth.accessToken}` },
+        }
+      );
+
+      if (response) {
+        // Replace the message in the array
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg._id === response.data.newMessage._id ? response.data.newMessage : msg))
+        );
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Reacting to a message failed");
       throw err;
     }
   };
@@ -97,6 +120,7 @@ const HomePage: React.FC = () => {
       throw err;
     }
   };
+
   const readMessage = async (selectedUserId: string) => {
     console.log("id", selectedUserId);
     try {
@@ -131,7 +155,13 @@ const HomePage: React.FC = () => {
       });
 
       socket.on("messageDeleted", (deletedMessageId) => {
-        setMessages((prevMessages) => prevMessages.filter(message => message._id !== deletedMessageId));
+        setMessages((prevMessages) => prevMessages.filter((message) => message._id !== deletedMessageId));
+      });
+
+      socket.on("messageReaction", (message) => {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) => (msg._id === message._id ? message : msg))
+        );
       });
     }
   };
@@ -143,6 +173,7 @@ const HomePage: React.FC = () => {
     if (socket) {
       socket.off("newMessage");
       socket.off("messageDeleted");
+      socket.off("messageReaction");
     }
   };
 
@@ -153,6 +184,7 @@ const HomePage: React.FC = () => {
           headers: { Authorization: `${userAuth.accessToken}` },
         });
         setUsers(response.data);
+        setLoadingUsers(false);
       } catch (err) {
         console.error(err);
       }
@@ -181,11 +213,13 @@ const HomePage: React.FC = () => {
         selectedUser,
         setSelectedUser,
         sendMessage,
+        reactToMessage,
         deleteMessage,
         readMessage,
         messages,
         messagesInterfaceVisible,
         setMessagesInterfaceVisible,
+        loadingUsers,
         loadingMessages,
         setLoadingMessages,
         messagesEndRef,

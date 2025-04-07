@@ -12,6 +12,10 @@ export interface IUser {
   accessToken?: string;
 }
 
+type Reaction = {
+  emoji: string;
+  userId: ObjectId;
+};
 export interface IMessage {
   senderId: ObjectId;
   receiverId: ObjectId;
@@ -20,6 +24,7 @@ export interface IMessage {
   images: string[];
   read: boolean;
   replyingTo: ObjectId;
+  reactions: Reaction[];
 }
 
 export interface IConversation {

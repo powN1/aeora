@@ -10,7 +10,7 @@ import s3 from "../utils/awsFunctions.ts";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const loggedInUserId = req.user.id;
+    const loggedInUserId = req.userId;
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select(
       "firstName surname email profileImg"
     );
@@ -42,7 +42,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
 };
 
 export const getMessages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const senderId = req.user;
+  const senderId = req.userId;
   const { receiverId } = req.body;
 
   const findQuery = {
@@ -111,8 +111,9 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
 };
 
 export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const senderId = req.user;
+  const senderId = req.userId;
   const { message, tempImagesFileNames, replyingMessageId, receiverId } = req.body;
+  console.log(receiverId);
 
   try {
     // If there is no message or no photos
@@ -126,7 +127,7 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const receiver = await User.findOne({ _id: receiverId });
+    const receiver = await User.findById(receiverId);
 
     if (!receiver) {
       res.status(401).json({ error: "Receiver user not found" });
@@ -219,8 +220,74 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const reactToMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const senderId = req.userId;
+  const { messageId, emoji, receiverId } = req.body;
+
+  try {
+    // If there is no message or no photos
+    if (!messageId) {
+      res.status(401).json({ error: "Message id required" });
+      return;
+    }
+
+    if (!emoji) {
+      res.status(401).json({ error: "Emoji required" });
+      return;
+    }
+
+    const receiver = await User.findById(receiverId);
+
+    if (!receiver) {
+      res.status(401).json({ error: "Receiver user not found" });
+      return;
+    }
+
+    const message = await Message.findById(messageId).populate("replyingTo");
+
+    if (!message) {
+      res.status(404).json({ error: "Message not found" });
+      return;
+    }
+
+    const existingReactionIndex = message.reactions.findIndex((r) => {
+      return r.userId.toString() === senderId.toString();
+    });
+
+    if (existingReactionIndex !== -1) {
+      const currentEmoji = message.reactions[existingReactionIndex].emoji;
+
+      if (currentEmoji === emoji) {
+        // Remove reaction
+        message.reactions.splice(existingReactionIndex, 1);
+        // console.log("reactions after removal", message.reactions);
+      } else {
+        // Update emoji
+        message.reactions[existingReactionIndex].emoji = emoji;
+      }
+    } else {
+      // Add new reaction
+      message.reactions = [...message.reactions, { emoji, userId: senderId }];
+    }
+
+    await message.save();
+
+    const receiverSocketId = getReceiverSocketId(receiver._id);
+    // If user is online then send the reaction in real time
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageReaction", message);
+    }
+
+    res.status(200).json({ success: true, message: "Reaction sent", newMessage: message });
+    return;
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
 export const readMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const senderId = req.user;
+  const senderId = req.userId;
   const { receiverId } = req.body;
 
   try {

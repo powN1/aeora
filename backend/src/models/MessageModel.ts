@@ -31,8 +31,14 @@ const messageSchema = new mongoose.Schema(
     },
     replyingTo: {
       type: ObjectId,
-      ref: "Message"
-    }
+      ref: "Message",
+    },
+    reactions: [
+      {
+        emoji: String,
+        userId: { type: ObjectId, ref: "User" },
+      },
+    ],
   },
   { timestamps: true }
 );

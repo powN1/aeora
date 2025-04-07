@@ -3,11 +3,13 @@ import { FaMagnifyingGlass } from "react-icons/fa6";
 import { useContext, useEffect, useState } from "react";
 import { UsersContext } from "../pages/HomePage.tsx";
 import { IoMdClose } from "react-icons/io";
+import Loader from "./Loader.tsx";
 
 const MessagesList: React.FC = () => {
-  const { messagesInterfaceVisible, users } = useContext(UsersContext);
+  const { messagesInterfaceVisible, users, loadingUsers } = useContext(UsersContext);
   const [inputValue, setInputValue] = useState("");
   const [localUsers, setLocalUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -60,22 +62,27 @@ const MessagesList: React.FC = () => {
       </div>
 
       {/* Users */}
-      <div className="flex flex-col overflow-y-scroll">
-        {localUsers.map((user, i) => {
-          return (
-            <MessageCardPreview
-              key={i}
-              id={user._id}
-              firstName={user.firstName}
-              surname={user.surname}
-              profileImg={user.profileImg}
-              lastMessage={user.lastMessage?.text}
-              lastMessageByUser={user.lastMessage?.sentByUser}
-              read={user.lastMessage?.read}
-            />
-          );
-        })}
-      </div>
+
+      {loadingUsers  ? (
+        <Loader />
+      ) : (
+        <div className="flex flex-col overflow-y-scroll">
+          {localUsers.map((user, i) => {
+            return (
+              <MessageCardPreview
+                key={i}
+                id={user._id}
+                firstName={user.firstName}
+                surname={user.surname}
+                profileImg={user.profileImg}
+                lastMessage={user.lastMessage?.text}
+                lastMessageByUser={user.lastMessage?.sentByUser}
+                read={user.lastMessage?.read}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

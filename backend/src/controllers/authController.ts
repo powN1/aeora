@@ -241,7 +241,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 };
 
 export const changeProfilePicture = async (req: Request, res: Response, next: NextFunction) => {
-  const { _id } = req.user;
+  const id = req.userId;
 
   const { profileImg } = req.body;
 
@@ -251,7 +251,7 @@ export const changeProfilePicture = async (req: Request, res: Response, next: Ne
   }
 
   try {
-    const user = await User.findOne({ _id });
+    const user = await User.findOne({ id });
     if (user) {
       user.profileImg = profileImg;
       await user.save();
