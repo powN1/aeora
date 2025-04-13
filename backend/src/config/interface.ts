@@ -1,5 +1,12 @@
 import { ObjectId } from "mongodb";
 
+type lastMessage = {
+  text: string;
+  images: string[];
+  read: boolean;
+  readAt: any;
+  sentByUser: boolean;
+};
 export interface IUser {
   _id: string;
   firstName: string;
@@ -10,11 +17,18 @@ export interface IUser {
   googleAuth: boolean;
   facebookAuth: boolean;
   accessToken?: string;
+  lastMessage: lastMessage;
 }
 
 type Reaction = {
   emoji: string;
   userId: ObjectId;
+};
+type LinkPreview = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  url: string;
 };
 export interface IMessage {
   senderId: ObjectId;
@@ -23,8 +37,10 @@ export interface IMessage {
   text: string;
   images: string[];
   read: boolean;
+  readAt: Date;
   replyingTo: ObjectId;
   reactions: Reaction[];
+  linkPreview: LinkPreview;
 }
 
 export interface IConversation {

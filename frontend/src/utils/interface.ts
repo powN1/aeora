@@ -42,3 +42,10 @@ export interface MessageCardPreviewProps {
   read?: boolean;
   lastMessageByUser?: boolean;
 }
+
+export interface ILinkPreview {
+  title: string;
+  description: string;
+  imageUrl: string;
+  url: string;
+}

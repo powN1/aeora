@@ -251,7 +251,7 @@ export const changeProfilePicture = async (req: Request, res: Response, next: Ne
   }
 
   try {
-    const user = await User.findOne({ id });
+    const user = await User.findById(id);
     if (user) {
       user.profileImg = profileImg;
       await user.save();

@@ -8,10 +8,7 @@ import { stringify } from "flatted";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-const changeProfilePicture = async (
-  pictureUrl: string,
-  userAuth: UserAuth,
-  setUserAuth: (user: UserAuth | null) => void
+const changeProfilePicture = async ( pictureUrl: string, userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void
 ) => {
   try {
     const response = await axios.post(
@@ -21,7 +18,7 @@ const changeProfilePicture = async (
     );
 
     if (response.data) {
-      console.log("pic url is:", response.data.profileImg);
+      // console.log("pic url is:", response.data.profileImg);
       const user: UserAuth = { ...userAuth, profileImg: response.data.profileImg };
       const userInSession = lookInSession("user");
       const userInSessionParsed = JSON.parse(userInSession);

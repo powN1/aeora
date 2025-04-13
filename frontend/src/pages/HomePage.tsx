@@ -33,14 +33,20 @@ const HomePage: React.FC = () => {
           headers: { Authorization: `${userAuth.accessToken}` },
         }
       );
+      const { messages } = response.data;
+
       setMessages(response.data.messages);
       setLoadingMessages(false);
+
+      return messages;
     } catch (err) {
       console.error(err);
     }
   };
 
-  const sendMessage = async (message: string, images: Array<File>, replyingMessageId: string) => {
+  const sendMessage = async (text: string, images: Array<File>, replyingMessageId: string) => {
+    console.log(`sendmsg text: ${text}, images: ${images}, replyMsgId: ${replyingMessageId}`);
+    // Check if there are any images in the message
     let tempImagesFileNames = [];
 
     try {
@@ -53,6 +59,7 @@ const HomePage: React.FC = () => {
             return { img, uploadUrl: response.data.url, imageFileName: response.data.imageFileName };
           })
         );
+        console.log("links for upload", imageUploadLinksResponse);
 
         await Promise.all(
           imageUploadLinksResponse.map(async ({ img, uploadUrl }) => {
@@ -63,17 +70,51 @@ const HomePage: React.FC = () => {
         tempImagesFileNames = imageUploadLinksResponse.map((image) => image.imageFileName);
       }
 
-      console.log("sending msg with", message, tempImagesFileNames);
+      // Check if the message is a link
+      const urlRegex = /https?:\/\/(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-\.]+(?:\/[^\s]*)?/;
+      const match = text.match(urlRegex);
+
+      let linkPreviewData;
+
+      if (match && match[0]) {
+        const url = match[0];
+        try {
+          const response = await axios.post(
+            "https://api.linkpreview.net",
+            { q: url },
+            { headers: { "X-Linkpreview-Api-Key": import.meta.env.VITE_LINK_PREVIEW_API_KEY } }
+          );
+
+          const data = response.data;
+          if (data) {
+            linkPreviewData = {
+              title: data.title,
+              description: data.description,
+              imageUrl: data.image,
+              url: url,
+            };
+          }
+        } catch (previewError) {
+          console.warn("Link preview fetch failed:", previewError);
+        }
+      }
+
       const response = await axios.post(
         `${BASE_URL}/api/messages/send-message`,
-        { message, tempImagesFileNames, replyingMessageId, receiverId: selectedUser._id },
+        { text, linkPreviewData, tempImagesFileNames, replyingMessageId, receiverId: selectedUser._id },
         {
           headers: { Authorization: `${userAuth.accessToken}` },
         }
       );
+
       if (response) {
-        console.log("send message response", response);
         setMessages((prevMessages) => [...prevMessages, response.data.newMessage]);
+        // Scroll to the bottom of messages
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Sending a message failed");
@@ -122,7 +163,6 @@ const HomePage: React.FC = () => {
   };
 
   const readMessage = async (selectedUserId: string) => {
-    console.log("id", selectedUserId);
     try {
       const response = await axios.post(
         `${BASE_URL}/api/messages/read-message`,
@@ -131,12 +171,20 @@ const HomePage: React.FC = () => {
           headers: { Authorization: `${userAuth.accessToken}` },
         }
       );
-      if (response) {
-        console.log(users);
+      if (response.data.success) {
+        const { readMessage } = response.data;
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
-            user._id === selectedUserId ? { ...user, lastMessage: { ...user.lastMessage, read: true } } : user
+            user._id === selectedUserId
+              ? {
+                  ...user,
+                  lastMessage: { ...user.lastMessage, read: true, readAt: readMessage.readAt },
+                }
+              : user
           )
+        );
+        setMessages((prevMessages) =>
+          prevMessages.map((message) => (message._id === readMessage._id ? { ...readMessage } : message))
         );
       }
     } catch (err: any) {
@@ -146,12 +194,35 @@ const HomePage: React.FC = () => {
   };
 
   const subscribeToMessages = () => {
-    if (Object.keys(selectedUser).length === 0) return;
+    const isUserSelected = Object.keys(selectedUser).length !== 0;
+    // if (Object.keys(selectedUser).length === 0) return;
     const socket = userAuth?.socket;
 
     if (socket) {
       socket.on("newMessage", (newMessage) => {
+        // console.log("u got a new msg!!!");
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        if (newMessage.senderId === selectedUser._id && !newMessage.read && isUserSelected) {
+          // Automatically mark as read if you're in that conversation
+          readMessage(selectedUser._id);
+        }
+      });
+
+      socket.on("readMessage", (readMessage) => {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user._id === selectedUser._id
+              ? {
+                  ...user,
+                  lastMessage: { ...user.lastMessage, read: true, readAt: readMessage.readAt },
+                }
+              : user
+          )
+        );
+        setMessages((prevMessages) =>
+          prevMessages.map((message) => (message._id === readMessage._id ? { ...readMessage } : message))
+        );
       });
 
       socket.on("messageDeleted", (deletedMessageId) => {
@@ -159,9 +230,7 @@ const HomePage: React.FC = () => {
       });
 
       socket.on("messageReaction", (message) => {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) => (msg._id === message._id ? message : msg))
-        );
+        setMessages((prevMessages) => prevMessages.map((msg) => (msg._id === message._id ? message : msg)));
       });
     }
   };
@@ -193,17 +262,32 @@ const HomePage: React.FC = () => {
   }, [userAuth, messages]);
 
   useEffect(() => {
-    if (Object.keys(selectedUser).length !== 0) getMessages();
+    const readAndGetMessages = async () => {
+      if (Object.keys(selectedUser).length === 0) {
+        return;
+      }
+
+      const fetchedMessages = await getMessages();
+      if (fetchedMessages && fetchedMessages.length > 0) {
+        const lastMessage = fetchedMessages[fetchedMessages.length - 1];
+        if (!lastMessage.read) await readMessage(selectedUser._id);
+      }
+
+      // Scroll to the bottom of messages
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    };
+
+    readAndGetMessages();
   }, [selectedUser]);
 
   useEffect(() => {
     subscribeToMessages();
     return () => unsubscribeFromMessages();
   }, [messages, subscribeToMessages, unsubscribeFromMessages]);
-
-  useEffect(() => {
-    if (messagesEndRef.current && messages) messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   return (
     <UsersContext.Provider

@@ -29,6 +29,7 @@ const messageSchema = new mongoose.Schema(
     read: {
       type: Boolean,
     },
+    readAt: { type: Date, default: null },
     replyingTo: {
       type: ObjectId,
       ref: "Message",
@@ -39,6 +40,12 @@ const messageSchema = new mongoose.Schema(
         userId: { type: ObjectId, ref: "User" },
       },
     ],
+    linkPreview: {
+      title: String,
+      description: String,
+      imageUrl: String,
+      url: String,
+    },
   },
   { timestamps: true }
 );

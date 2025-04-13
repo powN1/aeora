@@ -9,7 +9,6 @@ const MessagesList: React.FC = () => {
   const { messagesInterfaceVisible, users, loadingUsers } = useContext(UsersContext);
   const [inputValue, setInputValue] = useState("");
   const [localUsers, setLocalUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -75,7 +74,7 @@ const MessagesList: React.FC = () => {
                 firstName={user.firstName}
                 surname={user.surname}
                 profileImg={user.profileImg}
-                lastMessage={user.lastMessage?.text}
+                lastMessage={user.lastMessage?.text || user.lastMessage?.images}
                 lastMessageByUser={user.lastMessage?.sentByUser}
                 read={user.lastMessage?.read}
               />

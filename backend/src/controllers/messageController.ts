@@ -15,6 +15,8 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
       "firstName surname email profileImg"
     );
 
+    const enrichedUsers = [];
+
     for (const user of filteredUsers) {
       const findQuery = {
         $or: [
@@ -24,17 +26,22 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
       };
 
       const lastMessageWithUser = await Message.findOne(findQuery).populate("replyingTo").sort({ createdAt: -1 });
+      // Convert user to plain JS object
+      const userObj = user.toObject();
 
       if (lastMessageWithUser) {
-        user.lastMessage = {
+        userObj.lastMessage = {
           text: lastMessageWithUser.text,
+          images: lastMessageWithUser.images,
           read: lastMessageWithUser.read,
+          readAt: lastMessageWithUser.readAt,
           sentByUser: lastMessageWithUser.senderId.toString() === loggedInUserId ? true : false,
         };
       }
+      enrichedUsers.push(userObj);
     }
 
-    res.status(200).json(filteredUsers);
+    res.status(200).json(enrichedUsers);
   } catch (err: any) {
     // If any other errors happen throw 500 error
     next(new InternalServerError());
@@ -53,9 +60,20 @@ export const getMessages = async (req: Request, res: Response, next: NextFunctio
   };
 
   try {
-    const messages = await Message.find(findQuery).populate("replyingTo");
+    const messages = await Message.find(findQuery).populate([
+      {
+        path: "replyingTo",
+      },
+      {
+        path: "reactions.userId",
+        select: "firstName surname email profileImg",
+      },
+    ]);
     res.status(200).json({ messages });
-  } catch (err: any) {}
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
 };
 
 export const deleteMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -82,9 +100,7 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
 
     // Find a conversation with this particular message in it
     let conversation = await Conversation.findOne(conversationFindQuery);
-    console.log("convo", conversation);
     let message = await Message.findOne(new mongoose.Types.ObjectId(messageId));
-    console.log("message", message);
 
     if (!conversation || !message) {
       res.status(404).json({ success: false, message: "Conversation or message not found" });
@@ -92,7 +108,7 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
     }
 
     // Remove message from the conversation document
-    conversation.messages.filter((message) => message._id !== messageId);
+    conversation.messages = conversation.messages.filter((message) => message._id.toString() !== messageId);
     await conversation.save();
     await message.deleteOne();
 
@@ -112,12 +128,11 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
 
 export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const senderId = req.userId;
-  const { message, tempImagesFileNames, replyingMessageId, receiverId } = req.body;
-  console.log(receiverId);
+  const { text, tempImagesFileNames, linkPreviewData, replyingMessageId, receiverId } = req.body;
 
   try {
     // If there is no message or no photos
-    if ((!message || message.length === 0) && (!tempImagesFileNames || tempImagesFileNames.length === 0)) {
+    if ((!text || text.length === 0) && (!tempImagesFileNames || tempImagesFileNames.length === 0)) {
       res.status(401).json({ error: "Message or images required" });
       return;
     }
@@ -144,7 +159,7 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
     const newMessage = new Message({
       senderId: senderId,
       receiverId: receiver._id,
-      text: message,
+      text,
       read: false,
     });
 
@@ -161,7 +176,7 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
     newMessage.conversationId = conversationId;
 
     if (replyingMessageId) {
-      const replyingMsg = await Message.findOne({ _id: replyingMessageId });
+      const replyingMsg = await Message.findById(replyingMessageId);
 
       if (!replyingMsg) {
         res.status(401).json({ error: "Replying message not found" });
@@ -203,6 +218,24 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
 
     await conversation.save();
 
+    // Check if the message is a link
+    const urlRegex = /https?:\/\/(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-\.]+(?:\/[^\s]*)?/;
+    const match = text.match(urlRegex);
+
+    let linkPreview;
+
+    if (match && match[0])
+      if (linkPreviewData) {
+        linkPreview = linkPreviewData;
+      } else {
+        linkPreview = {
+          title: "",
+          description: "",
+          imageUrl: "",
+          url: "",
+        };
+      }
+    newMessage.linkPreview = linkPreview;
     const newMsgSaved = await newMessage.save();
     const populatedMsg = await Message.findById(newMsgSaved._id).populate("replyingTo");
 
@@ -291,7 +324,7 @@ export const readMessage = async (req: Request, res: Response, next: NextFunctio
   const { receiverId } = req.body;
 
   try {
-    const receiver = await User.findOne({ _id: receiverId });
+    const receiver = await User.findById(receiverId);
 
     if (!receiverId) {
       res.status(401).json({ error: "Provide receiver id" });
@@ -310,14 +343,30 @@ export const readMessage = async (req: Request, res: Response, next: NextFunctio
       ],
     };
 
-    const lastMessageWithUser = await Message.findOne(findQuery).sort({ createdAt: -1 });
+    const readMessage = await Message.findOne(findQuery).sort({ createdAt: -1 });
 
-    if (lastMessageWithUser) {
-      lastMessageWithUser.read = true;
-      await lastMessageWithUser.save();
+    if (!readMessage) {
+      res.status(404).json({ success: false, message: "No message found" });
+      return;
     }
 
-    res.status(200).json({ success: true, message: "Message read", lastMessageWithUser });
+    // If message has been read
+    if (readMessage.read) {
+      res.status(200).json({ success: false, message: "Message already read", readMessage });
+      return;
+    }
+
+    readMessage.read = true;
+    readMessage.readAt = new Date();
+    await readMessage.save();
+
+    const receiverSocketId = getReceiverSocketId(receiver._id);
+    // If user is online then send the reaction in real time
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("readMessage", readMessage);
+    }
+
+    res.status(200).json({ success: true, message: "Message read", readMessage });
     return;
   } catch (err: any) {
     // If any other errors happen throw 500 error

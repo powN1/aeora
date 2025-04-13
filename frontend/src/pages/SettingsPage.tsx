@@ -41,9 +41,9 @@ export const SettingsPage = () => {
           }
         );
 
-        if (response.data.uploadUrl) {
+        if (response.data.url) {
           // If S3 link has been provided then upload it to S3
-          const url = response.data.uploadUrl;
+          const url = response.data.url;
           const uploadedPictureUrl = await uploadImage(img, url);
 
           if (uploadedPictureUrl) {
@@ -69,7 +69,7 @@ export const SettingsPage = () => {
         <ToastContainer position="top-center" />
         <Navbar />
 
-        <div className="w-24/25 flex flex-col justify-center items-center gap-y-10 px-4 max-md:pt-16">
+        <div className="w-24/25 flex flex-col justify-center items-center gap-y-10 px-4 max-lg:pt-16">
           <div className="rounded-full h-40 w-40">
             <img
               src={userAuth.profileImg ? userAuth.profileImg : defaultUserImg}
@@ -79,7 +79,7 @@ export const SettingsPage = () => {
           </div>
 
           <button
-            className="w-full lg:w-1/5 py-2 rounded-full bg-aeora hover:bg-aeora-300 text-lg text-white font-bold cursor-pointer"
+            className="w-full md:w-1/2 lg:w-1/5 py-2 rounded-full bg-aeora hover:bg-aeora-300 text-lg text-white font-bold cursor-pointer"
             onClick={handleButtonClick}
           >
             Change profile picture

@@ -1,13 +1,27 @@
+// React
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { UsersContext } from "../pages/HomePage";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaReply } from "react-icons/fa";
-import { MdOutlineEmojiEmotions } from "react-icons/md";
-import { useAuth } from "../context/AuthContext";
-import data from "@emoji-mart/data";
+
+// Libraries
 import Picker from "@emoji-mart/react";
 
-const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsReplying, message }) => {
+// Icons
+import { FaReply } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { MdOutlineEmojiEmotions } from "react-icons/md";
+
+import { useAuth } from "../context/AuthContext";
+import { UsersContext } from "../pages/HomePage";
+import { ILinkPreview } from "../utils/interface";
+import { Link } from "react-router-dom";
+
+const Message = ({
+  textareaRef,
+  setSelectedMessage,
+  setIsReplying,
+  message,
+  handleReactionPopup,
+  handleImagePreview,
+}) => {
   const { reactToMessage, deleteMessage, selectedUser } = useContext(UsersContext);
   const {
     userAuth: { id },
@@ -16,17 +30,17 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
   const [showOptions, setShowOptions] = useState(false);
   const [showEmojiToolbar, setShowEmojiToolbar] = useState(false);
   const [isTopHalf, setIsTopHalf] = useState(true);
-  // const [reactionsSorted, setReactionsSorted] = useState([]);
 
   const optionsPopupRef = useRef(null); // Ref for the options menu
   const emojiPopupRef = useRef(null); // Ref for the emoji menu
   const emojiExpandedPopupRef = useRef(null); // Ref for the emoji menu
 
-  const quickEmojis = ["👍", "❤️", "😂", "😮", "😢"]; // Customize as needed
+  const quickEmojis = ["👍", "❤️", "😂", "😮", "😢"];
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleMessageDeletion = () => {
     deleteMessage(message._id);
+    setSelectedMessage(null);
     setShowOptions(false);
   };
 
@@ -95,7 +109,7 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
             (message.replyingTo.text ? (
               <div
                 className={
-                  "px-3 py-1 rounded-xl bg-gray-400/20 text-gray-500 " +
+                  "px-3 py-1 rounded-xl bg-gray-200 text-gray-500 " +
                   (selectedUser._id === message.receiverId ? "" : "self-start")
                 }
               >
@@ -104,18 +118,18 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
             ) : (
               <div
                 className={
-                  "bg-gray-400/20 p-2 rounded-sm " + (selectedUser._id === message.receiverId ? "" : "self-start")
+                  "bg-gray-200 p-2 rounded-sm " + (selectedUser._id === message.receiverId ? "" : "self-start")
                 }
               >
                 <div className="w-16 h-16 rounded-sm">
-                  <img src={message.replyingTo.images[0]} className="w-full h-full object-cover rounded-sm" />
+                  <img src={message?.replyingTo?.images[0]} className="w-full h-full object-cover rounded-sm" />
                 </div>
               </div>
             ))}
 
           <div
             className={
-              "flex " +
+              "flex items-center justify-end " +
               (message.receiverId === id ? "flex-row-reverse " : " ") +
               (selectedUser._id === message.receiverId ? "" : "self-start")
             }
@@ -139,7 +153,6 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
                   <button className="px-3 py-1 cursor-pointer hover:bg-aeora-200 " onClick={handleMessageDeletion}>
                     Delete
                   </button>
-                  <button className="px-3 py-1 cursor-pointer hover:bg-aeora-200 ">Return</button>
                 </div>
               )}
 
@@ -213,29 +226,60 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
 
             {/* Text messages */}
             {message.text !== "" && (
-              <div className="flex flex-col">
-                <div
-                  className={
-                    "flex justify-center items-center px-3 py-1 bg-aeora rounded-xl " +
-                    (selectedUser._id === message.receiverId ? "text-white" : "text-gray-900 bg-gray-400/25")
-                  }
-                >
-                  {message.text}
+              <div className={"flex flex-col " + (message.linkPreview && message.linkPreview.url ? "lg:w-1/3" : "")}>
+                <div className="flex flex-col">
+                  <div
+                    className={
+                      "flex justify-center items-center px-3 py-1 bg-aeora " +
+                      (selectedUser._id === message.receiverId ? "text-white " : "text-gray-900 bg-gray-200 ") +
+                      (message.linkPreview && message.linkPreview.url ? "rounded-t-xl" : "rounded-xl")
+                    }
+                  >
+                    {message.linkPreview ? (
+                      <Link
+                        to={message.linkPreview.url || message.text}
+                        target="_blank"
+                        className="underline w-full break-all"
+                      >
+                        {message.linkPreview.url || message.text}
+                      </Link>
+                    ) : (
+                      message.text
+                    )}
+                  </div>
+
+                  {message.linkPreview && (
+                    <div className="">
+                      <Link to={message.linkPreview.url} target="_blank" rel="noopener noreferrer">
+                        <div className="">
+                          <img src={message.linkPreview.imageUrl} alt={message.linkPreview.title} />
+                          <div className="bg-gray-200 p-2 rounded-b-xl">
+                            <h3 className="text-ellipsis line-clamp-2 text-gray-900">{message.linkPreview.title}</h3>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {message.reactions && message.reactions.length !== 0 && (
                   <div
                     className={
-                      "flex justify-center items-center bg-white p-[2px] px-1 mb-1 [box-shadow:_2px_2px_3px_rgb(0_0_0_/_25%)] rounded-full self-end -mt-1 -ml-1 " +
+                      "flex justify-center items-center bg-white p-[2px] px-1 mb-1 [box-shadow:_2px_2px_3px_rgb(0_0_0_/_25%)] rounded-full self-end -mt-1 -ml-1 cursor-pointer " +
                       (message.receiverId === id ? "flex-row-reverse " : " ")
                     }
+                    onClick={() => handleReactionPopup(message)}
                   >
                     {reactionsSorted.length > 1 && (
                       <p className="mx-1 text-gray-500 text-xs">{reactionsSorted.length}</p>
                     )}
 
-                    {reactionsSorted.slice(0, 4).map((reaction) => {
-                      return <div className="text-xs">{reaction.emoji}</div>;
+                    {reactionsSorted.slice(0, 4).map((reaction, i) => {
+                      return (
+                        <div key={i} className="text-xs">
+                          {reaction.emoji}
+                        </div>
+                      );
                     })}
                   </div>
                 )}
@@ -245,12 +289,22 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
             {/* Image messages */}
             {message.images && message.images.length !== 0 && (
               <div className="flex flex-col">
-                <div className="flex items-center gap-x-2 ">
-                  {message.images.map((image, i) => (
-                    <div key={i} className="w-16 h-16 rounded-sm">
-                      <img src={image} className="w-full h-full object-cover rounded-sm" />
-                    </div>
-                  ))}
+                <div className={"flex items-center gap-x-2 " + (message.images.length > 4 ? "" : "")}>
+                  <div
+                    className={
+                      "w-32 h-32 relative rounded-sm cursor-pointer [box-shadow:_2px_2px_6px_rgb(0_0_0_/_40%)] " +
+                      (message.images.length > 1 ? "m-3" : "my-1")
+                    }
+                    onClick={() => handleImagePreview(message)}
+                  >
+                    {message.images.length > 1 && (
+                      <>
+                        <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] w-32 h-32 bg-gray-300 rounded-sm rotate-10"></div>
+                        <div className="absolute top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%] w-32 h-32 bg-gray-200 rounded-sm rotate-5"></div>
+                      </>
+                    )}
+                    <img src={message.images[0]} className="relative w-full h-full object-cover rounded-sm" />
+                  </div>
                 </div>
 
                 {message.reactions && message.reactions.length !== 0 && (
@@ -264,8 +318,12 @@ const Message = ({ i, textareaRef, selectedMessage, setSelectedMessage, setIsRep
                       <p className="mx-1 text-gray-500 text-xs">{reactionsSorted.length}</p>
                     )}
 
-                    {reactionsSorted.slice(0, 4).map((reaction) => {
-                      return <div className="text-xs">{reaction.emoji}</div>;
+                    {reactionsSorted.slice(0, 4).map((reaction, i) => {
+                      return (
+                        <div key={i} className="text-xs">
+                          {reaction.emoji}
+                        </div>
+                      );
                     })}
                   </div>
                 )}

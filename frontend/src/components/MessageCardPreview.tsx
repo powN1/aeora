@@ -49,13 +49,13 @@ const MessageCardPreview: React.FC<MessageCardPreviewProps> = ({
         )}
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col justify-between">
         <p className="capitalize">
           {firstName} {surname}
         </p>
-        <p className={"line-clamp-1 w-full" + (!read && !lastMessageByUser && "font-bold")}>
+        <p className={"line-clamp-1 w-full text-sm " + (!read && !lastMessageByUser ? "font-bold text-gray-700" : "text-gray-500")}>
           {lastMessageByUser ? "You: " : ""}
-          {lastMessage}
+          {typeof(lastMessage) === "string" ? lastMessage : `Sent images (${lastMessage.length})`}
         </p>
       </div>
 

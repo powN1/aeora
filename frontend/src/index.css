@@ -12,11 +12,38 @@
   --color-aeora-700: #662928;
   --color-aeora-800: #331414;
 }
+:root {
+  --swiper-navigation-color: #cc5251;
+}
 
 .aeora-pattern-bg {
   background-image: url("./assets/aeoramsgbg.png");
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.75);
   background-blend-mode: screen;
   background-repeat: space repeat;
   background-size: 1.5%;
+}
+
+.sample-slider {
+  position: static !important;
+  display: grid !important;
+}
+.sample-slider [class^="swiper-button-"] {
+  inset: initial;
+  margin: 0;
+  align-self: center;
+}
+.sample-slider .swiper-button-prev {
+  justify-self: start;
+  margin-left: -50px;
+}
+.sample-slider .swiper-button-next {
+  justify-self: end;
+  margin-right: -50px;
+}
+.sample-slider .swiper-pagination {
+  inset: initial !important;
+  align-self: end;
+  justify-self: center;
+  margin-bottom: -50px;
 }

@@ -1,4 +1,5 @@
 import logoExtended from "../assets/logoExtended.svg";
+import mobileAeora from "../assets/mobileaeora.png";
 import googleLogo from "../assets/google.svg";
 import facebookLogo from "../assets/facebook.svg";
 import { loginGoogleUser, loginFacebookUser, login } from "../services/authService";
@@ -100,7 +101,7 @@ const LoginPage: React.FC = () => {
               {/* </div> */}
               <button
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
-                onClick={async() => await loginGoogleUser(userAuth, setUserAuth)}
+                onClick={async () => await loginGoogleUser(userAuth, setUserAuth)}
               >
                 <img src={googleLogo} alt="facebook logo" className="w-6" />
                 <p className="">
@@ -110,7 +111,7 @@ const LoginPage: React.FC = () => {
 
               <button
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
-                onClick={async() => await loginFacebookUser(userAuth, setUserAuth)}
+                onClick={async () => await loginFacebookUser(userAuth, setUserAuth)}
               >
                 <img src={facebookLogo} alt="facebook logo" className="w-6" />
                 <p className="">
@@ -120,8 +121,10 @@ const LoginPage: React.FC = () => {
             </div>
           </div>
           {/* Right side lg */}
-          <div className="hidden lg:flex w-1/2 relative justify-center items-center">
-            <img src="" alt="" className="w-2/3 rotate-6" />
+          <div className="hidden lg:flex w-1/2 relative justify-center items-center px-3">
+            <div className="w-3/4 flex justify-center items-center">
+              <img src={mobileAeora} alt="" className="w-full object-cover rounded-lg" />
+            </div>
           </div>
         </section>
       </div>
