@@ -36,6 +36,7 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
           read: lastMessageWithUser.read,
           readAt: lastMessageWithUser.readAt,
           sentByUser: lastMessageWithUser.senderId.toString() === loggedInUserId ? true : false,
+          sentAt: lastMessageWithUser.createdAt,
         };
       }
       enrichedUsers.push(userObj);

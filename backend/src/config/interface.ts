@@ -4,8 +4,9 @@ type lastMessage = {
   text: string;
   images: string[];
   read: boolean;
-  readAt: any;
+  readAt: Date;
   sentByUser: boolean;
+  sentAt: Date;
 };
 export interface IUser {
   _id: string;

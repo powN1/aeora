@@ -74,7 +74,7 @@ const MessagesInterface: React.FC = () => {
     const images = e.target.files;
     const imagesArray = Array.from(images);
 
-    const fileSizeLimit = 1 * 1024 * 1024; // 2MB in bytes
+    const fileSizeLimit = 2 * 1024 * 1024; // 2MB in bytes
     const maxFiles = 8; // Set your maximum allowed number of files
 
     if (imagesArray.length > maxFiles) {
@@ -85,7 +85,7 @@ const MessagesInterface: React.FC = () => {
     // Check for exceeding file size and stop if any of files are exceeding
     for (const image of imagesArray) {
       if (image.size > fileSizeLimit) {
-        toast.error("Max 1MB file size");
+        toast.error("Max 2MB file size");
         return;
       }
     }
@@ -517,7 +517,7 @@ const MessagesInterface: React.FC = () => {
                 </Swiper>
               )}
             </div>
-            <div className="max-w-3/4 md:max-w-2/3 lg:max-w-1/2">
+            <div className="w-full max-w-3/4 md:max-w-2/3 lg:max-w-1/2">
               <Swiper
                 onSwiper={setThumbsSwiper}
                 modules={[Thumbs, Navigation]}

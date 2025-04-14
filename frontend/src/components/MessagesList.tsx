@@ -1,6 +1,6 @@
 import MessageCardPreview from "./MessageCardPreview";
 import { FaMagnifyingGlass } from "react-icons/fa6";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { UsersContext } from "../pages/HomePage.tsx";
 import { IoMdClose } from "react-icons/io";
 import Loader from "./Loader.tsx";
@@ -21,9 +21,22 @@ const MessagesList: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    setLocalUsers(users);
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const hasMessageA = !!a.lastMessage;
+      const hasMessageB = !!b.lastMessage;
+
+      if (!hasMessageA && !hasMessageB) return 0;
+      if (!hasMessageA) return 1;
+      if (!hasMessageB) return -1;
+
+      return new Date(b.lastMessage.sentAt).getTime() - new Date(a.lastMessage.sentAt).getTime();
+    });
   }, [users]);
+
+  useEffect(() => {
+    setLocalUsers(sortedUsers);
+  }, [sortedUsers]);
 
   return (
     <div
@@ -62,7 +75,7 @@ const MessagesList: React.FC = () => {
 
       {/* Users */}
 
-      {loadingUsers  ? (
+      {loadingUsers ? (
         <Loader />
       ) : (
         <div className="flex flex-col overflow-y-scroll">

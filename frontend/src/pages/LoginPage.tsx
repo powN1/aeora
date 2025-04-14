@@ -1,3 +1,4 @@
+import logo from "../assets/logo.svg";
 import logoExtended from "../assets/logoExtended.svg";
 import mobileAeora from "../assets/mobileaeora.png";
 import googleLogo from "../assets/google.svg";
@@ -44,10 +45,19 @@ const LoginPage: React.FC = () => {
     await login(userData, userAuth, setUserAuth);
   };
 
+  const loginDemoUser = async() => {
+    const userData: UserLogin = {
+      email: import.meta.env.VITE_DEMO_ACC_EMAIL,
+      password: import.meta.env.VITE_DEMO_ACC_PASSWORD,
+    };
+
+    await login(userData, userAuth, setUserAuth);
+  };
+
   return (
     <div className="bg-gray-100">
       <ToastContainer position="top-center" />
-      <div className="h-screen lg:w-[60%] lg:px-0 mx-auto flex flex-col gap-y-8 overflow-hidden px-1">
+      <div className="h-screen lg:w-[60%] px-4 lg:px-0 mx-auto flex flex-col gap-y-8 overflow-hidden ">
         <Link to="/" className="w-34 lg:w-38 mt-8">
           <img src={logoExtended} alt="logo" className="w-full h-full object-cover" />
         </Link>
@@ -94,11 +104,6 @@ const LoginPage: React.FC = () => {
             </form>
             {/* Login buttons */}
             <div className="flex flex-col w-full md:w-1/2 gap-y-6">
-              {/* <div className="flex w-2/3 mx-auto py-2 -mt-5 -mb-5 items-center"> */}
-              {/*   <div className="bg-gray-300 h-[1px] w-full"></div> */}
-              {/*   <div className="p-2 -mt-1 text-gray-500">or</div> */}
-              {/*   <div className="bg-gray-300 h-[1px] w-full"></div> */}
-              {/* </div> */}
               <button
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
                 onClick={async () => await loginGoogleUser(userAuth, setUserAuth)}
@@ -118,11 +123,26 @@ const LoginPage: React.FC = () => {
                   Continue with <span className="font-bold">facebook</span>
                 </p>
               </button>
+
+              {/* <div className="flex items-center"> */}
+              {/*   <div className="w-1/2 h-[1px] bg-gray-400/20"></div> */}
+              {/*   <p className="mb-1 mx-3">or</p> */}
+              {/*   <div className="w-1/2 h-[1px] bg-gray-400/20"></div> */}
+              {/* </div> */}
+              <button
+                className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
+                onClick={async () => await loginDemoUser()}
+              >
+                <img src={logo} alt="facebook logo" className="w-6" />
+                <p className="">
+                  Check with <span className="font-bold ">demo account</span>
+                </p>
+              </button>
             </div>
           </div>
           {/* Right side lg */}
           <div className="hidden lg:flex w-1/2 relative justify-center items-center px-3">
-            <div className="w-3/4 flex justify-center items-center">
+            <div className="w-2/3 flex justify-center items-center">
               <img src={mobileAeora} alt="" className="w-full object-cover rounded-lg" />
             </div>
           </div>
