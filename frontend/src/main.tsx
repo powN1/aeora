@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import { AuthProvider } from "./context/AuthContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
+  <BrowserRouter basename="/aeora">
     <AuthProvider>
       <App />
     </AuthProvider>

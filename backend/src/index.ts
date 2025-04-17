@@ -5,7 +5,7 @@ import dbConnect from "./config/dbConnect.ts";
 import firebaseSetup from "./config/firebaseSetup.ts";
 import { errorHandler } from "./middlewares/errorHandler.ts";
 import type { NextFunction, Response, Request } from "express";
-import { io, app, httpServer } from "./services/socket.ts";
+import { app, httpServer } from "./services/socket.ts";
 // Routes
 import authRouter from "./routes/authRoute.ts";
 import messageRouter from "./routes/messageRoute.ts";
@@ -23,10 +23,10 @@ firebaseSetup();
 // Connect mongoose to the database
 dbConnect();
 
-app.use("/api/auth", authRouter);
-app.use("/api/messages", messageRouter);
+app.use("/aeora/api/auth", authRouter);
+app.use("/aeora/api/messages", messageRouter);
 
-app.post("/api/get-upload-url", async (req: Request, res: Response, next: NextFunction) => {
+app.post("/aeora/api/get-upload-url", async (req: Request, res: Response, next: NextFunction) => {
   const { userId } = req.body;
 
   try {

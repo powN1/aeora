@@ -127,6 +127,54 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const deleteDemoMessages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const demoAcc = await User.findOne({ email: "newman123@gmail.com" });
+
+    if (!demoAcc) {
+      res.status(401).json({ error: "Demo account not found" });
+      return;
+    }
+
+    const demoAccMessages = await Message.find({ senderId: demoAcc._id });
+
+    if (!demoAccMessages) {
+      res.status(401).json({ error: "No demo account messages found" });
+      return;
+    }
+
+    const lastMessageDate = new Date(1744793258 * 1000); // 15th of April
+    const newDemoAccMessages = demoAccMessages.filter((message) => {
+      return message.createdAt > lastMessageDate;
+    });
+
+    for (const msg of newDemoAccMessages) {
+      // Query
+      const conversationFindQuery = {
+        messages: { $in: [new mongoose.Types.ObjectId(msg._id)] },
+      };
+
+      // Find a conversation with this particular message in it
+      let conversation = await Conversation.findOne(conversationFindQuery);
+
+      if (!conversation) {
+        return;
+      }
+
+      // Remove message from the conversation document
+      conversation.messages = conversation.messages.filter((message) => message._id.toString() !== msg._id);
+      await conversation.save();
+      await msg.deleteOne();
+    }
+
+    res.status(200).json({ success: true, message: "Demo account messages deleted" });
+    return;
+  } catch (err: any) {
+    // If any other errors happen throw 500 error
+    next(new InternalServerError());
+  }
+};
+
 export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const senderId = req.userId;
   const { text, tempImagesFileNames, linkPreviewData, replyingMessageId, receiverId } = req.body;

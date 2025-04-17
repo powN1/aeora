@@ -281,7 +281,7 @@ const MessagesInterface: React.FC = () => {
       {loadingMessages ? (
         <Loader />
       ) : (
-        <div className="flex flex-col overflow-y-auto mt-auto p-2 gap-y-1">
+        <div className="h-full flex flex-col justify-end overflow-y-auto mt-auto p-2 gap-y-1">
           {messages.map((message, i) => (
             <Message
               key={i}
@@ -330,7 +330,7 @@ const MessagesInterface: React.FC = () => {
           <div className={"relative w-full max-w-[84%] lg:max-w-[95%] flex flex-col bg-gray-400/25 rounded-md"}>
             {/* Replying to */}
             {isReplying && (
-              <div className="flex items-center w-full lg:max-w-1/3 px-2 py-3 gap-x-2">
+              <div className="flex items-center w-9/10 lg:max-w-1/3 px-2 py-3 gap-x-2">
                 <div className="text-gray-900 line-clamp-1 rounded-md py-1 px-2 bg-gray-400/50">
                   {selectedMessage.text && selectedMessage.text}
                   {selectedMessage.images && selectedMessage.images[0] && (
@@ -372,9 +372,9 @@ const MessagesInterface: React.FC = () => {
               rows={1}
             />
 
-            <div className="absolute top-1/2 right-3 translate-y-[-50%]">
+            <div className="absolute bottom-0 right-0 px-3 py-2">
               <button
-                className="relative cursor-pointer text-gray-500"
+                className="flex justify-center items-center relative cursor-pointer text-gray-500"
                 onClick={(e) => {
                   e.preventDefault();
                   setPickerOpen((prev) => !prev);
@@ -386,7 +386,7 @@ const MessagesInterface: React.FC = () => {
               {pickerOpen && (
                 <div
                   ref={emojiExpandedPopupRef}
-                  className="absolute -right-9 md:right-0 bottom-10 [box-shadow:_2px_2px_6px_rgb(0_0_0_/_30%)] rounded-sm"
+                  className="absolute -right-5 md:right-0 bottom-10 [box-shadow:_2px_2px_6px_rgb(0_0_0_/_30%)] rounded-sm"
                 >
                   <Picker
                     onEmojiSelect={(emoji) => {
