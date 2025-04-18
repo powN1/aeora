@@ -34,7 +34,6 @@ const HomePage: React.FC = () => {
         }
       );
       const { messages } = response.data;
-      console.log(selectedUser);
 
       setMessages(response.data.messages);
       setLoadingMessages(false);
@@ -46,7 +45,6 @@ const HomePage: React.FC = () => {
   };
 
   const sendMessage = async (text: string, images: Array<File>, replyingMessageId: string) => {
-    console.log(`sendmsg text: ${text}, images: ${images}, replyMsgId: ${replyingMessageId}`);
     // Check if there are any images in the message
     let tempImagesFileNames = [];
 
@@ -60,7 +58,6 @@ const HomePage: React.FC = () => {
             return { img, uploadUrl: response.data.url, imageFileName: response.data.imageFileName };
           })
         );
-        console.log("links for upload", imageUploadLinksResponse);
 
         await Promise.all(
           imageUploadLinksResponse.map(async ({ img, uploadUrl }) => {

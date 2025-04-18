@@ -11,7 +11,7 @@ import { UserLogin } from "../utils/interface";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage: React.FC = () => {
-  const { userAuth, setUserAuth } = useAuth();
+  const { setUserAuth } = useAuth();
 
   const [emailInputValue, setEmailInputValue] = useState("");
   const [passwordInputValue, setPasswordInputValue] = useState("");

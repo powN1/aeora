@@ -53,7 +53,6 @@ const Message = ({
   };
 
   const handleMessageReaction = (emoji: string) => {
-    console.log("react");
     setPickerOpen(false);
     setShowEmojiToolbar(false);
     setShowEmojiToolbarMobile(false);

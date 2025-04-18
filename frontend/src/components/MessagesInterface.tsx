@@ -154,7 +154,7 @@ const MessagesInterface: React.FC = () => {
       sendMessage(inputValue, [], isReply && selectedMessage._id);
       sendMessage("", selectedImagesFiles, isReply && selectedMessage._id);
     }
-    console.log(`input: ${inputValue}, images: ${selectedImagesFiles}, reply: ${selectedMessage?._id}`);
+    // console.log(`input: ${inputValue}, images: ${selectedImagesFiles}, reply: ${selectedMessage?._id}`);
     setInputValue("");
     setImagePreviewUrls([]);
     setSelectedImagesFiles([]);
@@ -188,7 +188,6 @@ const MessagesInterface: React.FC = () => {
 
     const sorted = grouped.sort((a, b) => b.count - a.count);
 
-    console.log(sorted);
     setSortedReactions(sorted);
     setReactionsToShow(message.reactions);
 
