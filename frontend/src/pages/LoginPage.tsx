@@ -6,7 +6,7 @@ import facebookLogo from "../assets/facebook.svg";
 import { loginGoogleUser, loginFacebookUser, login } from "../services/authService";
 import { ToastContainer, toast } from "react-toastify";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { UserLogin } from "../utils/interface";
 import { useAuth } from "../context/AuthContext";
 
@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
       password: passwordInputValue,
     };
 
-    await login(userData, userAuth, setUserAuth);
+    await login(userData, setUserAuth);
   };
 
   const loginDemoUser = async() => {
@@ -51,7 +51,7 @@ const LoginPage: React.FC = () => {
       password: import.meta.env.VITE_DEMO_ACC_PASSWORD,
     };
 
-    await login(userData, userAuth, setUserAuth);
+    await login(userData, setUserAuth);
   };
 
   return (
@@ -106,7 +106,7 @@ const LoginPage: React.FC = () => {
             <div className="flex flex-col w-full md:w-1/2 gap-y-6">
               <button
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
-                onClick={async () => await loginGoogleUser(userAuth, setUserAuth)}
+                onClick={async () => await loginGoogleUser(setUserAuth)}
               >
                 <img src={googleLogo} alt="facebook logo" className="w-6" />
                 <p className="">
@@ -116,7 +116,7 @@ const LoginPage: React.FC = () => {
 
               <button
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
-                onClick={async () => await loginFacebookUser(userAuth, setUserAuth)}
+                onClick={async () => await loginFacebookUser(setUserAuth)}
               >
                 <img src={facebookLogo} alt="facebook logo" className="w-6" />
                 <p className="">

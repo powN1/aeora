@@ -11,7 +11,7 @@ let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for e
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 
 const RegisterPage: React.FC = () => {
-  const { userAuth, setUserAuth } = useAuth();
+  const { setUserAuth } = useAuth();
 
   const [firstNameInputValue, setFirstNameInputValue] = useState("");
   const [surnameInputValue, setSurnameInputValue] = useState("");
@@ -57,7 +57,7 @@ const RegisterPage: React.FC = () => {
       password: passwordInputValue,
     };
 
-    register(userData, userAuth, setUserAuth);
+    register(userData, setUserAuth);
   };
 
   return (

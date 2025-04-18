@@ -12,7 +12,7 @@ function App() {
   const { userAuth, setUserAuth } = useAuth();
 
   useEffect(() => {
-    checkAuthorization(userAuth, setUserAuth);
+    checkAuthorization(setUserAuth);
   }, []);
 
   return (

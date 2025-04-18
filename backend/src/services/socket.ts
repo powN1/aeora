@@ -7,13 +7,17 @@ const app: Application = express();
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
+  path: "/aeora/socket",
   cors: {
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://pownprojects.site",
+    ],
   },
 });
 
 // Socket
-
 export function getReceiverSocketId(userId: string) {
   return userSocketMap[userId];
 }
@@ -26,7 +30,7 @@ type userSocketMapType = {
 const userSocketMap: userSocketMapType = {};
 
 io.on("connection", (socket) => {
-  console.log("user connected", socket.id);
+  // console.log("user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
   if (userId) userSocketMap[userId] = socket.id;
@@ -34,7 +38,7 @@ io.on("connection", (socket) => {
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("user disconnected", socket.id);
+    // console.log("user disconnected", socket.id);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });

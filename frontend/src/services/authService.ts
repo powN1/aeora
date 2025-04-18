@@ -4,11 +4,13 @@ import { toast } from "react-toastify";
 import { lookInSession, removeFromSession, storeInSession } from "./sessionService";
 import { UserRegister, UserLogin, UserAuth } from "../utils/interface";
 import { io, Socket } from "socket.io-client";
-import { stringify } from "flatted";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-const changeProfilePicture = async ( pictureUrl: string, userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void
+const changeProfilePicture = async (
+  pictureUrl: string,
+  userAuth: UserAuth,
+  setUserAuth: (user: UserAuth | null) => void
 ) => {
   try {
     const response = await axios.post(
@@ -32,7 +34,7 @@ const changeProfilePicture = async ( pictureUrl: string, userAuth: UserAuth, set
     throw err;
   }
 };
-const checkAuthorization = (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
+const checkAuthorization = (setUserAuth: (user: UserAuth | null) => void) => {
   let userInSession = lookInSession("user");
   if (userInSession) {
     const userData = JSON.parse(userInSession);
@@ -43,7 +45,7 @@ const checkAuthorization = (userAuth: UserAuth, setUserAuth: (user: UserAuth | n
   }
 };
 
-const login = async (user: UserLogin, userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
+const login = async (user: UserLogin, setUserAuth: (user: UserAuth | null) => void) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/auth/login`, user);
 
@@ -60,7 +62,7 @@ const login = async (user: UserLogin, userAuth: UserAuth, setUserAuth: (user: Us
   }
 };
 
-const loginGoogleUser = async (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
+const loginGoogleUser = async (setUserAuth: (user: UserAuth | null) => void) => {
   try {
     const googleRes = await authWithGoogle();
     if (!googleRes) {
@@ -84,7 +86,7 @@ const loginGoogleUser = async (userAuth: UserAuth, setUserAuth: (user: UserAuth 
   }
 };
 
-const loginFacebookUser = async (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
+const loginFacebookUser = async (setUserAuth: (user: UserAuth | null) => void) => {
   try {
     const facebookRes = await authWithFacebook();
     // console.log(facebookRes);
@@ -117,7 +119,7 @@ const logout = async (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) =
   setUserAuth({ accessToken: null });
 };
 
-const register = async (user: UserRegister, userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
+const register = async (user: UserRegister, setUserAuth: (user: UserAuth | null) => void) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/auth/register`, user);
 
@@ -137,7 +139,8 @@ const register = async (user: UserRegister, userAuth: UserAuth, setUserAuth: (us
 const connectSocket = (userData: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
   if (userData?.socket) return;
 
-  const socket = io(BASE_URL, {
+  const socket = io(import.meta.env.VITE_SERVER_DOMAIN, {
+    path: "/aeora/socket",
     query: {
       userId: userData.id,
     },
@@ -159,7 +162,7 @@ const connectSocket = (userData: UserAuth, setUserAuth: (user: UserAuth | null) 
 };
 
 const disconnectSocket = (userAuth: UserAuth, setUserAuth: (user: UserAuth | null) => void) => {
-  console.log(userAuth.socket);
+  // console.log(userAuth.socket);
   if (userAuth.socket?.connected) userAuth.socket.disconnect();
   setUserAuth((prevState: UserAuth) => {
     const { socket, ...updatedState } = prevState;

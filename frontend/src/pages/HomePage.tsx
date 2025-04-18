@@ -34,6 +34,7 @@ const HomePage: React.FC = () => {
         }
       );
       const { messages } = response.data;
+      console.log(selectedUser);
 
       setMessages(response.data.messages);
       setLoadingMessages(false);

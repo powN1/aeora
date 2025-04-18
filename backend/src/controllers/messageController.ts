@@ -83,7 +83,6 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
   try {
     const receiver = await User.findOne({ _id: receiverId });
 
-    console.log("receiver", receiver);
     if (!receiver) {
       res.status(401).json({ error: "Receiver user not found" });
       return;

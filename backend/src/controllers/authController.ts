@@ -126,7 +126,6 @@ export const loginFacebookUser = async (req: Request, res: Response, next: NextF
 };
 
 export const loginGoogleUser = async (req: Request, res: Response, next: NextFunction) => {
-  console.log("login google");
   let { accessToken } = req.body;
 
   try {
