@@ -2,11 +2,10 @@
     <img src="./frontend/src/assets/logoExtended2.png" width="180"/>
 </div>
 
-<h2 align="center">
-    Aeora - Realtime Messaging App
-</h2>
+<br>
 
-Aeora is a modern messaging application built with the **MERN stack** and powered by **Socket.IO** for real-time communication. It offers a seamless user experience with emoji support, mobile responsiveness, and smooth transitions.
+<a href="https://pownprojects.site/aeora" style="text-decoration: underline; font-weight: bold;">Aeora</a>
+ is a modern messaging application built with the **MERN stack** and powered by Socket.IO for real-time communication. It offers a seamless user experience with emoji support, mobile responsiveness, and smooth transitions.
 
 ---
 
@@ -17,7 +16,7 @@ Aeora is a modern messaging application built with the **MERN stack** and powere
 - 📁 Image files handling by AWS S3
 - 🌐 Responsive layout for mobile and desktop
 - 📁 Firebase google and facebook login authentication
-- 😀 Emoji picker with [emoji-mart](https://github.com/missive/emoji-mart)
+- 😀 Emoji picker with emoji-mart
 - 📲 Swipeable conversations with Swiper
 - 🔄 Routing and protected pages with React Router
 - 💾 Secure password handling using bcrypt
