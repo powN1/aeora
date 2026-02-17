@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
                 className="py-3 border border-gray-300 flex justify-center items-center gap-x-3 rounded-full text-black cursor-pointer"
                 onClick={async () => await loginGoogleUser(setUserAuth)}
               >
-                <img src={googleLogo} alt="facebook logo" className="w-6" />
+                <img src={googleLogo} alt="google logo" className="w-6" />
                 <p className="">
                   Continue with <span className="font-bold">google</span>
                 </p>

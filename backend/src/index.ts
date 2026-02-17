@@ -12,7 +12,7 @@ import messageRouter from "./routes/messageRoute.ts";
 import { generateUploadUrl } from "./utils/awsFunctions.ts";
 import { InternalServerError } from "./errors/InternalServerError.ts";
 
-const PORT: string | number = process.env.PORT || 3000;
+const PORT: string | number = process.env.PORT || 3003;
 
 app.use(cors<Request>());
 app.use(express.json());

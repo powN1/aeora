@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
         `${BASE_URL}/api/messages/get-messages`,
         { receiverId: selectedUser._id },
         {
-          headers: { Authorization: `${userAuth.accessToken}` },
+          headers: { Authorization: `${userAuth?.accessToken}` },
         }
       );
       const { messages } = response.data;
@@ -53,7 +53,7 @@ const HomePage: React.FC = () => {
         const imageUploadLinksResponse = await Promise.all(
           images.map(async (img) => {
             const response = await axios.post(`${BASE_URL}/api/get-upload-url`, {
-              headers: { Authorization: `${userAuth.accessToken}` },
+              headers: { Authorization: `${userAuth?.accessToken}` },
             });
             return { img, uploadUrl: response.data.url, imageFileName: response.data.imageFileName };
           })
