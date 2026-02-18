@@ -19,7 +19,7 @@ const PORT: string | number = process.env.PORT || 3003;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(cors<Request>());
+// app.use(cors<Request>());
 app.use(express.json());
 
 // Firebase initialize config
