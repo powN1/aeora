@@ -2,12 +2,19 @@ import mongoose from "mongoose";
 
 mongoose.set("strictQuery", false);
 
-const dbConnect = (): void => {
+const dbConnect = async (): Promise<void> => {
+  const dbUri = process.env.DB_LOCATION;
+  if (!dbUri) {
+    console.error("DB_LOCATION environment variable is missing!");
+    process.exit(1); // Exit immediately if no URI
+  }
+
   try {
-    mongoose.connect(process.env.DB_LOCATION as string);
-    console.log("Database Connected successfully");
+    await mongoose.connect(dbUri);
+    console.log("Database connected successfully");
   } catch (error) {
-    console.log("Database Error");
+    console.error("Database connection error:", error);
+    process.exit(1); // Exit container on DB failure
   }
 };
 

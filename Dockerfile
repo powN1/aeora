@@ -35,6 +35,4 @@ ENV NODE_ENV=production
 EXPOSE 3003
 
 # Start server
-CMD ["node", "server.js"]
-
-
+CMD ["bun", "src/index.ts"]
